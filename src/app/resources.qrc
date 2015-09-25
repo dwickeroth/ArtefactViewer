@@ -1,0 +1,16 @@
+<RCC>
+    <qresource prefix="/">
+        <file alias="lightingVertexShader.vsh">../shader/lightingVertexShader.vsh</file>
+        <file alias="lightingFragmentShader.fsh">../shader/lightingFragmentShader.fsh</file>
+        <file alias="coloringVertexShader.vsh">../shader/coloringVertexShader.vsh</file>
+        <file alias="coloringFragmentShader.fsh">../shader/coloringFragmentShader.fsh</file>
+        <file alias="singleColorVertexShader.vsh">../shader/singleColorVertexShader.vsh</file>
+        <file alias="singleColorFragmentShader.fsh">../shader/singleColorFragmentShader.fsh</file>
+        <file>../icons/clockwise.png</file>
+        <file>../icons/counterclockwise.png</file>
+        <file>../icons/down.png</file>
+        <file>../icons/left.png</file>
+        <file>../icons/right.png</file>
+        <file>../icons/up.png</file>
+    </qresource>
+</RCC>

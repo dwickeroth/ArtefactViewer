@@ -1,0 +1,4 @@
+/build*/
+/bin/*
+/doc/*
+!/doc/av_doxygen_config.txt
