@@ -49,6 +49,8 @@ public:
     void fillBuffers();
 
     QMatrix4x4 getMvpMatrix();
+    QMatrix4x4 getLeftMvpMatrix();
+    QMatrix4x4 getRightMvpMatrix();
 
     int getSelectedPoint() const;
     void setSelectedPoint(int selectedPoint);
@@ -127,7 +129,7 @@ private:
     void drawModelNoShading(QMatrix4x4 l_vMatrix);
     void drawLights(QMatrix4x4 l_vMatrix);
     void drawLightCircles(QMatrix4x4 l_vMatrix);
-    void drawOverlays(QPaintDevice* device, bool offscreen = false, int fboWidth = 0, QMatrix4x4 l_vMatrix);
+    void drawOverlays(QPaintDevice* device, bool offscreen = false, int fboWidth = 0);
 
 private:
     //private members with getters/setters
@@ -144,12 +146,12 @@ private:
     bool        m_paintAnnotations;
 
     double      m_camDistanceToOrigin;
+    double      m_eyeSeparation;
 
     QVector3D   m_camOrigin;
     QVector3D   m_camPosition;
     QVector3D   m_LeftCamPosition;
     QVector3D   m_RightCamPosition;
-    QVector3D   m_EyeSeparation;
     QVector3D   m_backgroundColor1;
     QVector3D   m_backgroundColor2;
 

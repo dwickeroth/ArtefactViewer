@@ -73,7 +73,7 @@ void AVGLWidget::initialize()
     m_enhance_param[3][0] = 10; m_enhance_param[3][1] =  0; m_enhance_param[3][2] = 0;//dark valleys
     m_paintAnnotations = false;
     m_camDistanceToOrigin = 150.0;
-    m_EyeSeparation = 200.0;
+    m_eyeSeparation = 200.0;
     m_camOrigin = QVector3D(0,0,0);
     m_backgroundColor1 = QVector3D(0.0,0.0,0.0);
     m_backgroundColor2 = QVector3D(0.0,0.0,0.0);
@@ -132,7 +132,7 @@ QImage AVGLWidget::renderToOffscreenBuffer(int width, int height)
         drawModelShaded(m_vMatrix);
     }
     else drawModelNoShading(m_vMatrix);
-    drawOverlays(&fbo, true, width,m_vMatrix);
+    drawOverlays(&fbo, true, width);
     fbo.release();
 
     resizeGL(this->width(), this->height());
@@ -493,8 +493,8 @@ void AVGLWidget::drawBackground()
 void AVGLWidget::setupCamera()
 {
     m_camPosition = QVector3D(0, 0, m_camDistanceToOrigin);
-    m_LeftCamPosition = QVector3D(-m_EyeSeparation/2, 0, m_camDistanceToOrigin);
-    m_RightCamPosition = QVector3D(m_EyeSeparation/2, 0, m_camDistanceToOrigin);
+    m_LeftCamPosition = QVector3D(-m_eyeSeparation/2, 0, m_camDistanceToOrigin);
+    m_RightCamPosition = QVector3D(m_eyeSeparation/2, 0, m_camDistanceToOrigin);
     m_camPosition += m_camOrigin;
     m_LeftCamPosition += m_camOrigin;
     m_RightCamPosition += m_camOrigin;
@@ -512,7 +512,7 @@ void AVGLWidget::drawModelShaded(QMatrix4x4 l_vMatrix)
     m_lightingShaderP.setUniformValue("mvpMatrix", m_pMatrix * l_vMatrix * m_MatrixArtefact);
 //    m_lightingShaderP.setUniformValue("LeftMvpMatrix", m_pMatrix * m_LeftVMatrix * m_MatrixArtefact);
 //    m_lightingShaderP.setUniformValue("RightMvpMatrix", m_pMatrix * m_RightVMatrix * m_MatrixArtefact);
-    m_lightingShaderP.setUniformValue("mvMatrix", l_vMat * m_MatrixArtefact);
+    m_lightingShaderP.setUniformValue("mvMatrix", l_vMatrix * m_MatrixArtefact);
 //    m_lightingShaderP.setUniformValue("LeftMvMatrix", m_LeftVMatrix * m_MatrixArtefact);
 //    m_lightingShaderP.setUniformValue("RightMvMatrix", m_RightVMatrix * m_MatrixArtefact);
     m_lightingShaderP.setUniformValue("normalMatrix", (l_vMatrix * m_MatrixArtefact).normalMatrix());
@@ -655,7 +655,7 @@ void AVGLWidget::drawLightCircles(QMatrix4x4 l_vMatrix)
     m_coloringShaderP.release();
 }
 
-void AVGLWidget::drawOverlays(QPaintDevice *device, bool offscreen, int fboWidth, QMatrix4x4 l_vMatrix)
+void AVGLWidget::drawOverlays(QPaintDevice *device, bool offscreen, int fboWidth )
 {
     QPainter painter(device);
     painter.setRenderHint(QPainter::Antialiasing);
@@ -678,7 +678,7 @@ void AVGLWidget::drawOverlays(QPaintDevice *device, bool offscreen, int fboWidth
     {
         for (int i = 0; i < 4; i++)
         {
-            QVector3D lightPos((m_pMatrix * l_vMatrix) * (m_lights[i].getTransformation() * QVector3D(0,0,0)));
+            QVector3D lightPos((m_pMatrix * m_vMatrix) * (m_lights[i].getTransformation() * QVector3D(0,0,0)));
             QPoint p(QVector3DUnnormalizedToQPoint(lightPos));
             painter.drawText(QRectF(p.x()-10, p.y()-45, 30, 30), QString::number(i+1));
         }
@@ -732,7 +732,7 @@ void AVGLWidget::drawOverlays(QPaintDevice *device, bool offscreen, int fboWidth
         {
             //Draw lines from annotation to annotated feature
             QPoint start(140,40+i*135);
-            QVector3D end3D = (m_pMatrix * l_vMatrix * m_MatrixArtefact) * m_model->m_listOfPointClouds[i].points[0];
+            QVector3D end3D = (m_pMatrix * m_vMatrix * m_MatrixArtefact) * m_model->m_listOfPointClouds[i].points[0];
 
             QVector<QVector3D> points;
             points.push_back(QPointNormalizedToVector3D(start));
@@ -769,7 +769,7 @@ void AVGLWidget::drawOverlays(QPaintDevice *device, bool offscreen, int fboWidth
         // Annotated features (Points, Distances, Angles, Areas)
         for (int i=0; i < m_model->m_listOfPointClouds.size(); i++)
         {        
-            m_singleColorShaderP.setUniformValue("mvpMatrix", m_pMatrix * l_vMatrix * m_MatrixArtefact);
+            m_singleColorShaderP.setUniformValue("mvpMatrix", m_pMatrix * m_vMatrix * m_MatrixArtefact);
             m_singleColorShaderP.setAttributeArray("vertex", m_model->m_listOfPointClouds[i].points.constData());
             m_singleColorShaderP.enableAttributeArray("vertex");
             QVector3D temp;
@@ -810,7 +810,7 @@ void AVGLWidget::drawOverlays(QPaintDevice *device, bool offscreen, int fboWidth
         // Paint a small rectangle around the selected point (if there is one)
         if (m_selectedPoint != -1)
         {
-            QPoint whiteSelect(QVector3DUnnormalizedToQPoint((m_pMatrix * l_vMatrix * m_MatrixArtefact) * m_model->m_listOfPointClouds.last().points[m_selectedPoint]));
+            QPoint whiteSelect(QVector3DUnnormalizedToQPoint((m_pMatrix *m_vMatrix * m_MatrixArtefact) * m_model->m_listOfPointClouds.last().points[m_selectedPoint]));
 
             //Draw Rectangles around selected point
             int rectSize = 4;
