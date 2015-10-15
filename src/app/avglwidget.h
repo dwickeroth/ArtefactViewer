@@ -124,7 +124,7 @@ protected:
 private:
 
     void drawBackground();
-    void setupCamera();
+    void setupCamera(boolean sizeIsLeft);
     void drawModelShaded(QMatrix4x4 l_vMatrix);
     void drawModelNoShading(QMatrix4x4 l_vMatrix);
     void drawLights(QMatrix4x4 l_vMatrix);

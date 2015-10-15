@@ -37,6 +37,10 @@ AVGLWidget::AVGLWidget(QWidget *parent) : QGLWidget(QGLFormat(QGL::SampleBuffers
     m_model = AVModel::instance();
     m_pMatrix.setToIdentity();
     m_model->setupLightGeometry();
+    QGLFormat stereoFormat;
+    stereoFormat.setSampleBuffers(true);
+    stereoFormat.setStereo(true);
+    this->setFormat(stereoFormat);
     initialize();
     setAutoFillBackground(false);
     setAutoBufferSwap(false);
@@ -124,21 +128,58 @@ QImage AVGLWidget::renderToOffscreenBuffer(int width, int height)
     glViewport(0, 0, fbo.size().width(), fbo.size().height());
 
     fbo.bind();
+
+
+    // Select back left buffer
+    glDrawBuffer(GL_BACK_LEFT);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     drawBackground();
-    setupCamera();
-    if (m_lighting)
+    setupCamera(true);
+    if (m_lighting) // Shading with lighting
     {
-        drawModelShaded(m_vMatrix);
+        drawModelShaded(m_LeftVMatrix);
+
+        if (m_lightsAreVisible) //Draw light representations
+        {
+            drawLights(m_LeftVMatrix);
+        }
     }
-    else drawModelNoShading(m_vMatrix);
+    else // Lighting off
+    {
+        drawModelNoShading(m_LeftVMatrix);
+    }
     drawOverlays(&fbo, true, width);
+    fbo.release();
+    fbo.bind();
+    // Select back right buffer
+    glDrawBuffer(GL_BACK_RIGHT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    drawBackground();
+    setupCamera(false);
+    if (m_lighting) // Shading with lighting
+    {
+        drawModelShaded(m_RightVMatrix);
+
+        if (m_lightsAreVisible) //Draw light representations
+        {
+            drawLights(m_RightVMatrix);
+        }
+    }
+    else // Lighting off
+    {
+        drawModelNoShading(m_RightVMatrix);
+    }
+    drawOverlays(&fbo, true, width);
+
+
     fbo.release();
 
     resizeGL(this->width(), this->height());
     updateGL();
 
     return fbo.toImage();
+
+
 }
 
 QVector3D AVGLWidget::getBackgroundColor2() const
@@ -407,6 +448,39 @@ void AVGLWidget::fillBuffers()
  */
 void AVGLWidget::paintGL()
 {
+    // Select back left buffer
+    glDrawBuffer(GL_BACK_LEFT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    //glEnable(GL_FASTEST);
+
+    // Draw Background
+    drawBackground();
+
+    // Set up the camera/view left
+    setupCamera(true);
+
+    glEnable(GL_DEPTH_TEST);
+    if (m_lighting) // Shading with lighting
+    {
+        drawModelShaded(m_LeftVMatrix);
+
+        if (m_lightsAreVisible) //Draw light representations
+        {
+            drawLights(m_LeftVMatrix);
+        }
+    }
+    else // Lighting off
+    {
+        drawModelNoShading(m_LeftVMatrix);
+    }
+
+    // Paint overlay objects
+    drawOverlays(this);
+
+
+
+    // Select back right buffer
+    glDrawBuffer(GL_BACK_RIGHT);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     //glEnable(GL_FASTEST);
 
@@ -414,25 +488,26 @@ void AVGLWidget::paintGL()
     drawBackground();
 
     // Set up the camera/view
-    setupCamera();
+    setupCamera(false);
 
     glEnable(GL_DEPTH_TEST);
     if (m_lighting) // Shading with lighting
     {
-        drawModelShaded(m_vMatrix);
+        drawModelShaded(m_RightVMatrix);
 
         if (m_lightsAreVisible) //Draw light representations
         {
-            drawLights(m_vMatrix);
+            drawLights(m_RightVMatrix);
         }
     }
     else // Lighting off
     {
-        drawModelNoShading(m_vMatrix);
+        drawModelNoShading(m_RightVMatrix);
     }
 
     // Paint overlay objects
     drawOverlays(this);
+
 
     swapBuffers();
 }
@@ -490,20 +565,25 @@ void AVGLWidget::drawBackground()
 }
 
 
-void AVGLWidget::setupCamera()
+void AVGLWidget::setupCamera(boolean sizeIsLeft)
 {
-    m_camPosition = QVector3D(0, 0, m_camDistanceToOrigin);
+    if(sizeIsLeft)
+    {
     m_LeftCamPosition = QVector3D(-m_eyeSeparation/2, 0, m_camDistanceToOrigin);
-    m_RightCamPosition = QVector3D(m_eyeSeparation/2, 0, m_camDistanceToOrigin);
-    m_camPosition += m_camOrigin;
     m_LeftCamPosition += m_camOrigin;
-    m_RightCamPosition += m_camOrigin;
-    m_vMatrix.setToIdentity();
     m_LeftVMatrix.setToIdentity();
-    m_RightVMatrix.setToIdentity();
-    m_vMatrix.lookAt(m_camPosition, m_camOrigin, QVector3D(0, 1, 0));
     m_LeftVMatrix.lookAt(m_LeftCamPosition, m_camOrigin, QVector3D(0, 1, 0));
-    m_RightVMatrix.lookAt(m_RightCamPosition, m_camOrigin, QVector3D(0, 1, 0));
+    }
+    else{
+        m_RightCamPosition = QVector3D(m_eyeSeparation/2, 0, m_camDistanceToOrigin);
+        m_RightCamPosition += m_camOrigin;
+        m_RightVMatrix.setToIdentity();
+        m_RightVMatrix.lookAt(m_RightCamPosition, m_camOrigin, QVector3D(0, 1, 0));
+    }
+//    m_camPosition = QVector3D(0, 0, m_camDistanceToOrigin);
+//    m_camPosition += m_camOrigin;
+//    m_vMatrix.setToIdentity();
+//    m_vMatrix.lookAt(m_camPosition, m_camOrigin, QVector3D(0, 1, 0));
 }
 
 void AVGLWidget::drawModelShaded(QMatrix4x4 l_vMatrix)
@@ -599,7 +679,7 @@ void AVGLWidget::drawLights(QMatrix4x4 l_vMatrix)
         m_coloringShaderP.disableAttributeArray("color");
         m_coloringShaderP.release();
     }
-    drawLightCircles(m_vMatrix);
+    drawLightCircles(l_vMatrix);
 }
 
 void AVGLWidget::drawLightCircles(QMatrix4x4 l_vMatrix)
