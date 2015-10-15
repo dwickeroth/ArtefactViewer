@@ -123,11 +123,11 @@ private:
 
     void drawBackground();
     void setupCamera();
-    void drawModelShaded();
-    void drawModelNoShading();
-    void drawLights();
-    void drawLightCircles();
-    void drawOverlays(QPaintDevice* device, bool offscreen = false, int fboWidth = 0);
+    void drawModelShaded(QMatrix4x4 l_vMatrix);
+    void drawModelNoShading(QMatrix4x4 l_vMatrix);
+    void drawLights(QMatrix4x4 l_vMatrix);
+    void drawLightCircles(QMatrix4x4 l_vMatrix);
+    void drawOverlays(QPaintDevice* device, bool offscreen = false, int fboWidth = 0, QMatrix4x4 l_vMatrix);
 
 private:
     //private members with getters/setters
@@ -147,6 +147,9 @@ private:
 
     QVector3D   m_camOrigin;
     QVector3D   m_camPosition;
+    QVector3D   m_LeftCamPosition;
+    QVector3D   m_RightCamPosition;
+    QVector3D   m_EyeSeparation;
     QVector3D   m_backgroundColor1;
     QVector3D   m_backgroundColor2;
 
@@ -160,6 +163,8 @@ private:
     QPoint      m_lastMousePosition;
     QMatrix4x4  m_pMatrix;
     QMatrix4x4  m_vMatrix;
+    QMatrix4x4  m_LeftVMatrix;
+    QMatrix4x4  m_RightVMatrix;
     QMatrix4x4  m_MatrixLights;
     QMatrix4x4  m_MatrixLightCircle;
 
@@ -180,8 +185,8 @@ private:
     double normalizeAngle180(double angle);
     double normalizeAngle360(double angle);
 
-    bool getIntersectionPoint(QPoint point, QVector3D *desiredPoint);
-    bool getClickedLight(QPoint point, int* light);
+    bool getIntersectionPoint(QPoint point, QVector3D *desiredPoint,  QMatrix4x4 l_vMatrix);
+    bool getClickedLight(QPoint point, int* light,  QMatrix4x4 l_vMatrix);
 
     QPoint QVector3DUnnormalizedToQPoint(QVector3D vector);
     QVector3D QPointNormalizedToVector3D(QPoint point);

@@ -996,12 +996,18 @@ float AVMainWindow::getRotationAngleFromUI()
 void AVMainWindow::sortPointClouds()
 {
     QMatrix4x4 mvpMatrix = m_glWidget->getMvpMatrix();
+//    QMatrix4x4 LeftMvpMatrix = m_glWidget->getMvpMatrix();
+//    QMatrix4x4 RightvpMatrix = m_glWidget->getMvpMatrix();
     for (int i=0; i < m_model->m_listOfPointClouds.size()-1; i++)
     {
         for (int j=i+1; j < m_model->m_listOfPointClouds.size()-1; j++)
         {
             if ((mvpMatrix * m_model->m_listOfPointClouds[i].points.first()).y() < (mvpMatrix * m_model->m_listOfPointClouds[j].points.first()).y())
                 m_model->m_listOfPointClouds.swap(i,j);
+//            if ((LeftMvpMatrix * m_model->m_listOfPointClouds[i].points.first()).y() < (LeftMvpMatrix * m_model->m_listOfPointClouds[j].points.first()).y())
+//                m_model->m_listOfPointClouds.swap(i,j);
+//            if ((RightMvpMatrix * m_model->m_listOfPointClouds[i].points.first()).y() < (RightMvpMatrix * m_model->m_listOfPointClouds[j].points.first()).y())
+//                m_model->m_listOfPointClouds.swap(i,j);
         }
     }
 }
