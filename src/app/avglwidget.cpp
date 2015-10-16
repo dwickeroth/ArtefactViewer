@@ -79,7 +79,7 @@ void AVGLWidget::initialize()
     m_enhance_param[3][0] = 10; m_enhance_param[3][1] =  0; m_enhance_param[3][2] = 0;//dark valleys
     m_paintAnnotations = false;
     m_camDistanceToOrigin = 150.0;
-    m_eyeSeparation = 200.0;
+    m_eyeSeparation = 100.0;
     m_camOrigin = QVector3D(0,0,0);
     m_backgroundColor1 = QVector3D(0.0,0.0,0.0);
     m_backgroundColor2 = QVector3D(0.0,0.0,0.0);
