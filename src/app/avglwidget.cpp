@@ -31,6 +31,7 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 #include "avmodel.h"
 #include "avmainwindow.h"
 #include "avtrackball.h"
+#include "iostream"
 
 AVGLWidget::AVGLWidget(QWidget *parent) : QGLWidget(QGLFormat(QGL::SampleBuffers), parent)
 {
@@ -60,6 +61,7 @@ AVGLWidget::~AVGLWidget()
  * part of the 3D viewport and corresponds to the initialization function of the mainwindow
  * that handles the (re-)initialization of the user interface.
  */
+
 void AVGLWidget::initialize()
 {
     m_MatrixLights.setToIdentity();
@@ -107,6 +109,7 @@ QMatrix4x4 AVGLWidget::getMatrixArtefact() const
 {
     return m_MatrixArtefact;
 }
+
 void AVGLWidget::setMatrixArtefact(const QMatrix4x4 &MatrixArtefact)
 {
     m_MatrixArtefact = MatrixArtefact;
@@ -115,7 +118,6 @@ void AVGLWidget::setMatrixArtefact(const QMatrix4x4 &MatrixArtefact)
 QImage AVGLWidget::renderToOffscreenBuffer(int width, int height)
 {
     qDebug() << "renderToOffscreenBuffer: " << width << " x " << height << "  max: " << GL_MAX_TEXTURE_SIZE;
-
     QGLFramebufferObjectFormat fboFormat;
     fboFormat.setAttachment(QGLFramebufferObject::Depth);
     fboFormat.setSamples(4);
@@ -126,11 +128,14 @@ QImage AVGLWidget::renderToOffscreenBuffer(int width, int height)
     m_pMatrix.setToIdentity();
     m_pMatrix.perspective(60.0f, (float) width / (float) height, 0.001f, 100000.0f);
     glViewport(0, 0, fbo.size().width(), fbo.size().height());
-
+    //UNSURE if I need to redraw in offscreen buffer
     fbo.bind();
-
-
     // Select back left buffer
+    //UNSURE
+    QGLFormat formato=this->format();
+    if(formato.stereo()){std::cout << "it's on for offscreen left!" << std::endl;}
+    else{std::cout << "it's OFF for offscreen left!" << std::endl;}
+
     glDrawBuffer(GL_BACK_LEFT);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     drawBackground();
@@ -150,9 +155,14 @@ QImage AVGLWidget::renderToOffscreenBuffer(int width, int height)
     }
     drawOverlays(&fbo, true, width);
     fbo.release();
+
+    //bind again? UNSURE
     fbo.bind();
     // Select back right buffer
     glDrawBuffer(GL_BACK_RIGHT);
+    //UNSURE
+    if(formato.stereo()){std::cout << "it's on for offscreen right!" << std::endl;}
+    else{std::cout << "it's OFF for offscreen right!" << std::endl;}
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     drawBackground();
     setupCamera(false);
@@ -172,7 +182,7 @@ QImage AVGLWidget::renderToOffscreenBuffer(int width, int height)
     drawOverlays(&fbo, true, width);
 
 
-    fbo.release();
+    //    fbo.release();
 
     resizeGL(this->width(), this->height());
     updateGL();
@@ -381,7 +391,7 @@ void AVGLWidget::fillBuffers()
     {
         QVector3D myColor(0,0,0);
         if (m_vertexColors)   myColor = m_model->m_colors[i] * m_model->m_shadowMap[i];
-        else                myColor = m_model->m_flatColor * m_model->m_shadowMap[i];        
+        else                myColor = m_model->m_flatColor * m_model->m_shadowMap[i];
         m_colorBuffer.write(i*12, &myColor, 3 * sizeof(GLfloat));
     }
     m_colorBuffer.release();
@@ -448,10 +458,14 @@ void AVGLWidget::fillBuffers()
  */
 void AVGLWidget::paintGL()
 {
+    QGLFormat formato=this->format();
+    if(formato.stereo()){std::cout << "it's on!" << std::endl;}
     // Select back left buffer
     glDrawBuffer(GL_BACK_LEFT);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    //glEnable(GL_FASTEST);
+//    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    //test
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    //    glEnable(GL_FASTEST);
 
     // Draw Background
     drawBackground();
@@ -481,7 +495,9 @@ void AVGLWidget::paintGL()
 
     // Select back right buffer
     glDrawBuffer(GL_BACK_RIGHT);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    //    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        //test
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     //glEnable(GL_FASTEST);
 
     // Draw Background
@@ -489,6 +505,7 @@ void AVGLWidget::paintGL()
 
     // Set up the camera/view
     setupCamera(false);
+    if(formato.stereo()){std::cout << "On your right!" << std::endl;}
 
     glEnable(GL_DEPTH_TEST);
     if (m_lighting) // Shading with lighting
@@ -513,7 +530,9 @@ void AVGLWidget::paintGL()
 }
 
 
+
 //! Is called when the widget's size (and thus the window's size) changes
+
 void AVGLWidget::resizeGL(int width, int height)
 {
     if (height == 0) {
@@ -569,10 +588,10 @@ void AVGLWidget::setupCamera(boolean sizeIsLeft)
 {
     if(sizeIsLeft)
     {
-    m_LeftCamPosition = QVector3D(-m_eyeSeparation/2, 0, m_camDistanceToOrigin);
-    m_LeftCamPosition += m_camOrigin;
-    m_LeftVMatrix.setToIdentity();
-    m_LeftVMatrix.lookAt(m_LeftCamPosition, m_camOrigin, QVector3D(0, 1, 0));
+        m_LeftCamPosition = QVector3D(-m_eyeSeparation/2, 0, m_camDistanceToOrigin);
+        m_LeftCamPosition += m_camOrigin;
+        m_LeftVMatrix.setToIdentity();
+        m_LeftVMatrix.lookAt(m_LeftCamPosition, m_camOrigin, QVector3D(0, 1, 0));
     }
     else{
         m_RightCamPosition = QVector3D(m_eyeSeparation/2, 0, m_camDistanceToOrigin);
@@ -580,21 +599,21 @@ void AVGLWidget::setupCamera(boolean sizeIsLeft)
         m_RightVMatrix.setToIdentity();
         m_RightVMatrix.lookAt(m_RightCamPosition, m_camOrigin, QVector3D(0, 1, 0));
     }
-//    m_camPosition = QVector3D(0, 0, m_camDistanceToOrigin);
-//    m_camPosition += m_camOrigin;
-//    m_vMatrix.setToIdentity();
-//    m_vMatrix.lookAt(m_camPosition, m_camOrigin, QVector3D(0, 1, 0));
+    //    m_camPosition = QVector3D(0, 0, m_camDistanceToOrigin);
+    //    m_camPosition += m_camOrigin;
+    //    m_vMatrix.setToIdentity();
+    //    m_vMatrix.lookAt(m_camPosition, m_camOrigin, QVector3D(0, 1, 0));
 }
 
 void AVGLWidget::drawModelShaded(QMatrix4x4 l_vMatrix)
 {
     m_lightingShaderP.bind();
     m_lightingShaderP.setUniformValue("mvpMatrix", m_pMatrix * l_vMatrix * m_MatrixArtefact);
-//    m_lightingShaderP.setUniformValue("LeftMvpMatrix", m_pMatrix * m_LeftVMatrix * m_MatrixArtefact);
-//    m_lightingShaderP.setUniformValue("RightMvpMatrix", m_pMatrix * m_RightVMatrix * m_MatrixArtefact);
+    //    m_lightingShaderP.setUniformValue("LeftMvpMatrix", m_pMatrix * m_LeftVMatrix * m_MatrixArtefact);
+    //    m_lightingShaderP.setUniformValue("RightMvpMatrix", m_pMatrix * m_RightVMatrix * m_MatrixArtefact);
     m_lightingShaderP.setUniformValue("mvMatrix", l_vMatrix * m_MatrixArtefact);
-//    m_lightingShaderP.setUniformValue("LeftMvMatrix", m_LeftVMatrix * m_MatrixArtefact);
-//    m_lightingShaderP.setUniformValue("RightMvMatrix", m_RightVMatrix * m_MatrixArtefact);
+    //    m_lightingShaderP.setUniformValue("LeftMvMatrix", m_LeftVMatrix * m_MatrixArtefact);
+    //    m_lightingShaderP.setUniformValue("RightMvMatrix", m_RightVMatrix * m_MatrixArtefact);
     m_lightingShaderP.setUniformValue("normalMatrix", (l_vMatrix * m_MatrixArtefact).normalMatrix());
     m_lightingShaderP.setUniformValue("light0Position", l_vMatrix * m_lights[0].getPosition());
     m_lightingShaderP.setUniformValue("light1Position", l_vMatrix * m_lights[1].getPosition());
@@ -795,7 +814,7 @@ void AVGLWidget::drawOverlays(QPaintDevice *device, bool offscreen, int fboWidth
 
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_CULL_FACE);
-        glEnable(GL_BLEND);        
+        glEnable(GL_BLEND);
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
         glLineWidth(offscreenFactor * 2.0f);
@@ -821,7 +840,7 @@ void AVGLWidget::drawOverlays(QPaintDevice *device, bool offscreen, int fboWidth
             QVector4D color(0.8f,0.0f,0.0f,0.5f);
             m_singleColorShaderP.setUniformValue("color", color);
             m_singleColorShaderP.setAttributeArray("vertex", points.constData());
-            m_singleColorShaderP.enableAttributeArray("vertex");            
+            m_singleColorShaderP.enableAttributeArray("vertex");
             glDrawArrays(GL_LINE_STRIP, 0, points.size());
             m_singleColorShaderP.disableAttributeArray("vertex");
 
@@ -844,11 +863,11 @@ void AVGLWidget::drawOverlays(QPaintDevice *device, bool offscreen, int fboWidth
             glDrawArrays(GL_LINE_LOOP, 0, points.size());
             m_singleColorShaderP.disableAttributeArray("vertex");
 
-        }        
+        }
 
         // Annotated features (Points, Distances, Angles, Areas)
         for (int i=0; i < m_model->m_listOfPointClouds.size(); i++)
-        {        
+        {
             m_singleColorShaderP.setUniformValue("mvpMatrix", m_pMatrix * m_vMatrix * m_MatrixArtefact);
             m_singleColorShaderP.setAttributeArray("vertex", m_model->m_listOfPointClouds[i].points.constData());
             m_singleColorShaderP.enableAttributeArray("vertex");
@@ -941,10 +960,10 @@ void AVGLWidget::mousePressEvent(QMouseEvent *event)
         m_lastMousePosition = event->pos();
     }
     else if (event->buttons() & Qt::LeftButton)
-    {        
+    {
         bool clickFound = false;
 
-        // Check for the annotations        
+        // Check for the annotations
         if(!clickFound && m_paintAnnotations)
         {
             for (int i=0; i < m_model->m_listOfPointClouds.size()-1; i++)
