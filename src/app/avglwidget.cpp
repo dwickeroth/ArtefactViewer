@@ -79,7 +79,7 @@ void AVGLWidget::initialize()
     m_enhance_param[3][0] = 10; m_enhance_param[3][1] =  0; m_enhance_param[3][2] = 0;//dark valleys
     m_paintAnnotations = false;
     m_camDistanceToOrigin = 150.0;
-    m_eyeSeparation = 100.0;
+    m_eyeSeparation = 10.0;
     m_camOrigin = QVector3D(0,0,0);
     m_backgroundColor1 = QVector3D(0.0,0.0,0.0);
     m_backgroundColor2 = QVector3D(0.0,0.0,0.0);
@@ -126,15 +126,17 @@ QImage AVGLWidget::renderToOffscreenBuffer(int width, int height)
     QGLFramebufferObject fbo(width, height, fboFormat);
 
     m_pMatrix.setToIdentity();
-    m_pMatrix.perspective(60.0f, (float) width / (float) height, 0.001f, 100000.0f);
+    //    m_pMatrix.perspective(60.0f, (float) width / (float) height, 0.001f, 100000.0f);
+    m_pMatrix.frustum(-(float) width /2,(float) width /2, -(float) height/2,(float) height/2, 0.001f, 100000.0f);
     glViewport(0, 0, fbo.size().width(), fbo.size().height());
     //UNSURE if I need to redraw in offscreen buffer
     fbo.bind();
     // Select back left buffer
     //UNSURE
-    QGLFormat formato=this->format();
-    if(formato.stereo()){std::cout << "it's on for offscreen left!" << std::endl;}
-    else{std::cout << "it's OFF for offscreen left!" << std::endl;}
+    //    QGLFormat formato=this->format();
+    //UNSURE: uncomment if offscreen buffer is not shown in stereo
+    //    if(formato.stereo()){std::cout << "it's on for offscreen left!" << std::endl;}
+    //    else{std::cout << "it's OFF for offscreen left!" << std::endl;}
 
     glDrawBuffer(GL_BACK_LEFT);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -160,9 +162,9 @@ QImage AVGLWidget::renderToOffscreenBuffer(int width, int height)
     fbo.bind();
     // Select back right buffer
     glDrawBuffer(GL_BACK_RIGHT);
-    //UNSURE
-    if(formato.stereo()){std::cout << "it's on for offscreen right!" << std::endl;}
-    else{std::cout << "it's OFF for offscreen right!" << std::endl;}
+    //UNSURE: uncomment if offscreen buffer is not shown in stereo
+    //    if(formato.stereo()){std::cout << "it's on for offscreen right!" << std::endl;}
+    //    else{std::cout << "it's OFF for offscreen right!" << std::endl;}
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     drawBackground();
     setupCamera(false);
@@ -458,13 +460,11 @@ void AVGLWidget::fillBuffers()
  */
 void AVGLWidget::paintGL()
 {
-    QGLFormat formato=this->format();
-    if(formato.stereo()){std::cout << "it's on!" << std::endl;}
+//    QGLFormat formato=this->format();
+//    if(formato.stereo()){std::cout << "it's on!" << std::endl;}
     // Select back left buffer
     glDrawBuffer(GL_BACK_LEFT);
-//    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    //test
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     //    glEnable(GL_FASTEST);
 
     // Draw Background
@@ -495,9 +495,7 @@ void AVGLWidget::paintGL()
 
     // Select back right buffer
     glDrawBuffer(GL_BACK_RIGHT);
-    //    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        //test
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     //glEnable(GL_FASTEST);
 
     // Draw Background
@@ -505,7 +503,8 @@ void AVGLWidget::paintGL()
 
     // Set up the camera/view
     setupCamera(false);
-    if(formato.stereo()){std::cout << "On your right!" << std::endl;}
+    //uncomment to check if stereo is on
+    //    if(formato.stereo()){std::cout << "On your right!" << std::endl;}
 
     glEnable(GL_DEPTH_TEST);
     if (m_lighting) // Shading with lighting
@@ -599,21 +598,13 @@ void AVGLWidget::setupCamera(boolean sizeIsLeft)
         m_RightVMatrix.setToIdentity();
         m_RightVMatrix.lookAt(m_RightCamPosition, m_camOrigin, QVector3D(0, 1, 0));
     }
-    //    m_camPosition = QVector3D(0, 0, m_camDistanceToOrigin);
-    //    m_camPosition += m_camOrigin;
-    //    m_vMatrix.setToIdentity();
-    //    m_vMatrix.lookAt(m_camPosition, m_camOrigin, QVector3D(0, 1, 0));
 }
 
 void AVGLWidget::drawModelShaded(QMatrix4x4 l_vMatrix)
 {
     m_lightingShaderP.bind();
     m_lightingShaderP.setUniformValue("mvpMatrix", m_pMatrix * l_vMatrix * m_MatrixArtefact);
-    //    m_lightingShaderP.setUniformValue("LeftMvpMatrix", m_pMatrix * m_LeftVMatrix * m_MatrixArtefact);
-    //    m_lightingShaderP.setUniformValue("RightMvpMatrix", m_pMatrix * m_RightVMatrix * m_MatrixArtefact);
     m_lightingShaderP.setUniformValue("mvMatrix", l_vMatrix * m_MatrixArtefact);
-    //    m_lightingShaderP.setUniformValue("LeftMvMatrix", m_LeftVMatrix * m_MatrixArtefact);
-    //    m_lightingShaderP.setUniformValue("RightMvMatrix", m_RightVMatrix * m_MatrixArtefact);
     m_lightingShaderP.setUniformValue("normalMatrix", (l_vMatrix * m_MatrixArtefact).normalMatrix());
     m_lightingShaderP.setUniformValue("light0Position", l_vMatrix * m_lights[0].getPosition());
     m_lightingShaderP.setUniformValue("light1Position", l_vMatrix * m_lights[1].getPosition());
