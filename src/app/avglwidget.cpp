@@ -42,6 +42,7 @@ AVGLWidget::AVGLWidget(QWidget *parent) : QGLWidget(QGLFormat(QGL::SampleBuffers
     stereoFormat.setSampleBuffers(true);
     stereoFormat.setStereo(true);
     this->setFormat(stereoFormat);
+    this->setAttribute(Qt::WA_AcceptTouchEvents,true);
     initialize();
     setAutoFillBackground(false);
     setAutoBufferSwap(false);
@@ -460,8 +461,12 @@ void AVGLWidget::fillBuffers()
  */
 void AVGLWidget::paintGL()
 {
-//    QGLFormat formato=this->format();
-//    if(formato.stereo()){std::cout << "it's on!" << std::endl;}
+
+    //    uncomment to check if we accept Touch Events by painting
+    //    boolean DoWe=this->testAttribute(Qt::WA_AcceptTouchEvents);
+    //    if(DoWe){std::cout << "we do!" << std::endl;}
+    //    QGLFormat formato=this->format();
+    //    if(formato.stereo()){std::cout << "it's on!" << std::endl;}
     // Select back left buffer
     glDrawBuffer(GL_BACK_LEFT);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -934,10 +939,41 @@ void AVGLWidget::drawOverlays(QPaintDevice *device, bool offscreen, int fboWidth
 }
 
 
+
+
+
+
+
+
+
+
+
+
+
+/////////////////////////////////////////////////////////////////
+///////////////////////////TOUCH EVENTS//////////////////////////
+/////////////////////////////////////////////////////////////////
+
+
+bool AVGLWidget::event(QEvent *event)
+{
+    if (event->type() == QEvent::TouchBegin) {
+                QTouchEvent *tap=static_cast<QTouchEvent *>(event);
+            std::cout << "That was your finger at " << tap->touchPoints().first().id() << std::endl;
+
+            if(!m_shiftDown) m_trackball->push(pixelPosToViewPos(tap->touchPoints().first().pos()), QQuaternion());
+            m_lastMousePosition = tap->touchPoints().first().lastPos().toPoint();
+            std::cout << "Your finger did that" << std::endl;
+            return true;
+    }
+    return QWidget::event(event);
+}
+
+
 //! Handles mouse button press events
 /*! mousePressEvent is called on every frame that is drawn with a mouse button down and handles different actions
-*  - right mouse button enables free camera rotation and lateral movement
-*  - left mouse button has several functions like
+*  - left mouse button enables free camera rotation and lateral movement
+*  - right mouse button has several functions like
 *   - selecting an annotation
 *   - creating a new point
 *   - selecting and dragging a point
@@ -945,12 +981,17 @@ void AVGLWidget::drawOverlays(QPaintDevice *device, bool offscreen, int fboWidth
 void AVGLWidget::mousePressEvent(QMouseEvent *event)
 {
 
-    if (event->buttons() & Qt::RightButton)
+    //    uncomment to check if we accept Touch Events by mouse press
+//        boolean DoWe=this->testAttribute(Qt::WA_AcceptTouchEvents);
+//        if(DoWe){std::cout << "we do!" << std::endl;}
+
+    if (event->buttons() & Qt::LeftButton)
     {
         if(!m_shiftDown) m_trackball->push(pixelPosToViewPos(event->localPos()), QQuaternion());
         m_lastMousePosition = event->pos();
+        std::cout << "That was the mouse" << std::endl;
     }
-    else if (event->buttons() & Qt::LeftButton)
+    else if (event->buttons() & Qt::RightButton)
     {
         bool clickFound = false;
 
@@ -1052,7 +1093,7 @@ void AVGLWidget::mouseMoveEvent(QMouseEvent *event)
     double deltaX = event->x() - m_lastMousePosition.x();
     double deltaY = event->y() - m_lastMousePosition.y();
 
-    if (event->buttons() & Qt::LeftButton) {
+    if (event->buttons() & Qt::RightButton) {
         if (m_draggedPoint != -1)
         {
             QVector3D intersectionPoint;
@@ -1064,7 +1105,7 @@ void AVGLWidget::mouseMoveEvent(QMouseEvent *event)
             }
         }
     }
-    else if (event->buttons() & Qt::RightButton && !m_shiftDown)
+    else if (event->buttons() & Qt::LeftButton && !m_shiftDown)
     {
         QQuaternion rotation = m_trackball->move(pixelPosToViewPos(event->localPos()), m_MatrixArtefact);
 
@@ -1074,7 +1115,7 @@ void AVGLWidget::mouseMoveEvent(QMouseEvent *event)
         m_MatrixArtefact.translate(-m_camOrigin);
         m_MatrixArtefact.translate(-m_model->m_centerPoint);
     }
-    else if (event->buttons() & Qt::RightButton && m_shiftDown)
+    else if (event->buttons() & Qt::LeftButton && m_shiftDown)
     {
         //calculate the vectors in which the camera should move "down" and "left" starting from world ccordinates
         //TODO: move Artefact instead of Camera
@@ -1091,7 +1132,7 @@ void AVGLWidget::mouseMoveEvent(QMouseEvent *event)
 
 void AVGLWidget::mouseDoubleClickEvent(QMouseEvent *event)
 {
-    if (event->buttons() & Qt::LeftButton && m_paintAnnotations == true)
+    if (event->buttons() & Qt::RightButton && m_paintAnnotations == true)
     {
         // Check for the annotations
         bool clickFound = false;

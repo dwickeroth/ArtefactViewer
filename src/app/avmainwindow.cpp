@@ -27,7 +27,6 @@ AVMainWindow::AVMainWindow(QWidget *parent) :
 {
     m_currentLightIndex = 0;
     ui->setupUi(this);
-
     /*
      * TODO!
     readPlyFile("../mesh/input_klein.ply");

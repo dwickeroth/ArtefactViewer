@@ -114,6 +114,7 @@ protected:
     void initializeGL();
     void paintGL();
     void resizeGL(int width, int height);
+    bool AVGLWidget::event(QEvent * event);
     void mousePressEvent(QMouseEvent *event);
     void mouseReleaseEvent(QMouseEvent *event);
     void mouseDoubleClickEvent(QMouseEvent *event);
@@ -176,7 +177,7 @@ private:
     QGLBuffer   m_indexBuffer;
     QGLBuffer   m_lightVertexBuffer;
     QGLBuffer   m_lightOnColorBuffer;
-    QGLBuffer   m_lightOffColorBuffer;    
+    QGLBuffer   m_lightOffColorBuffer;
     QGLBuffer   m_lightCircleVertexBuffer;
     QGLBuffer   m_lightCircleColorBuffer;
 
