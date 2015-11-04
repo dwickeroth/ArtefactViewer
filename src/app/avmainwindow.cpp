@@ -19,6 +19,7 @@
 
 #include <iostream>
 
+bool k_Ctrl=false;
 AVMainWindow* AVMainWindow::m_instance = 0;
 
 AVMainWindow::AVMainWindow(QWidget *parent) :
@@ -91,6 +92,7 @@ void AVMainWindow::setCheckBoxes(bool use_lighting, bool use_vertexColors, bool 
 void AVMainWindow::keyPressEvent(QKeyEvent *e)
 {
     //TODO: Set Artefact Rotation
+    if(e->key()==Qt::Key_Control) k_Ctrl=true;
 
     if (e->key() == Qt::Key_Escape)
         close();
@@ -105,7 +107,7 @@ void AVMainWindow::keyPressEvent(QKeyEvent *e)
     }
     else if (e->key() == Qt::Key_5)
     {
-        on_pushButton_center_clicked();
+        on_pushButton_reset_clicked();
     }
     else if (e->key() == Qt::Key_6 || e->key() == Qt::Key_Right)
     {
@@ -123,6 +125,16 @@ void AVMainWindow::keyPressEvent(QKeyEvent *e)
     {
         on_pushButton_clock_clicked();
     }
+//keyboard shortcuts
+    if(k_Ctrl&&e->key()==Qt::Key_O)
+        on_actionOpen_triggered();
+    if(k_Ctrl&&e->key()==Qt::Key_S)
+        on_actionSave_triggered();
+    if(k_Ctrl&&e->key()==Qt::Key_F)
+        on_actionFullscreen_triggered();
+    if(k_Ctrl&&e->key()==Qt::Key_T)
+        on_actionScreenshot_triggered();
+
 }
 
 
@@ -130,6 +142,7 @@ void AVMainWindow::keyPressEvent(QKeyEvent *e)
 void AVMainWindow::keyReleaseEvent(QKeyEvent *e)
 {
     if (e->key() == Qt::Key_Shift) m_glWidget->setShiftDown(false);
+    if(e->key()==Qt::Key_Control) k_Ctrl=false;
 }
 
 
@@ -473,8 +486,17 @@ void AVMainWindow::on_actionClose_triggered()
     close();
 }
 
+//! toggles Fullscreen
+void AVMainWindow::on_actionFullscreen_triggered()
+{
+    if(!m_instance->isFullScreen())
+        m_instance->showFullScreen();
+    else
+        m_instance->showMaximized();
+}
 
-//! Askes the user for a location to store the screenshot and generates it by grabbing the framebuffer and writing it to disk
+
+//! Asks the user for a location to store the screenshot and generates it by grabbing the framebuffer and writing it to disk
 void AVMainWindow::on_actionScreenshot_triggered()
 {
     QString fileString = QFileDialog::getSaveFileName(this, "Abbild speichern", "", "Bilddateien (*.jpg *.png *.bmp)");

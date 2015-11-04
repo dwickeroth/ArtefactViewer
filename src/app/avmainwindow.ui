@@ -1809,6 +1809,7 @@
     </property>
     <addaction name="actionScreenshot"/>
     <addaction name="actionOffscreen"/>
+    <addaction name="actionFullscreen"/>
    </widget>
    <widget class="QMenu" name="menuEinstellungen">
     <property name="title">
@@ -1913,6 +1914,14 @@
    </property>
    <property name="toolTip">
     <string>Render HQ image and save it.</string>
+   </property>
+  </action>
+  <action name="actionFullscreen">
+   <property name="text">
+    <string>Fullscreen</string>
+   </property>
+   <property name="toolTip">
+    <string>Toggle Fullscreen</string>
    </property>
   </action>
  </widget>

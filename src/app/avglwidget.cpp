@@ -43,6 +43,7 @@ AVGLWidget::AVGLWidget(QWidget *parent) : QGLWidget(QGLFormat(QGL::SampleBuffers
     stereoFormat.setStereo(true);
     this->setFormat(stereoFormat);
     this->setAttribute(Qt::WA_AcceptTouchEvents,true);
+    this->setCursor(Qt::BlankCursor);
     initialize();
     setAutoFillBackground(false);
     setAutoBufferSwap(false);
