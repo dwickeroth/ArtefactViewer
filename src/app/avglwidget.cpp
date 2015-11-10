@@ -957,20 +957,20 @@ void AVGLWidget::drawOverlays(QPaintDevice *device, bool offscreen, int fboWidth
 /////////////////////////////////////////////////////////////////
 
 
-bool AVGLWidget::event(QEvent *event)
-{
-    if (event->type() == QEvent::TouchBegin) {
-                QTouchEvent *tap=static_cast<QTouchEvent *>(event);
-                AVPQReader sample;
-            std::cout << "That was your finger at " << tap->touchPoints().first().id() <<""<<sample.Init()<< std::endl;
+//bool AVGLWidget::event(QEvent *event)
+//{
+//    if (event->type() == QEvent::TouchBegin) {
+//                QTouchEvent *tap=static_cast<QTouchEvent *>(event);
+//                AVPQReader sample;
+//            std::cout << "That was your finger at " << tap->touchPoints().first().id() <<""<<sample.Init()<< std::endl;
 
-            if(!m_shiftDown) m_trackball->push(pixelPosToViewPos(tap->touchPoints().first().pos()), QQuaternion());
-            m_lastMousePosition = tap->touchPoints().first().lastPos().toPoint();
-            std::cout << "Your finger did that" << std::endl;
-            return true;
-    }
-    return QWidget::event(event);
-}
+//            if(!m_shiftDown) m_trackball->push(pixelPosToViewPos(tap->touchPoints().first().pos()), QQuaternion());
+//            m_lastMousePosition = tap->touchPoints().first().lastPos().toPoint();
+//            std::cout << "Your finger did that" << std::endl;
+//            return true;
+//    }
+//    return QWidget::event(event);
+//}
 
 
 //! Handles mouse button press events

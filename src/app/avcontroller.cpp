@@ -5,7 +5,7 @@
 #include "avmodel.h"
 #include "avplugininterfaces.h"
 #include "avpluginmanager.h"
-
+#include "avpqreader.h"
 #include <QMessageBox>
 #include <QDomDocument>
 #include <QCoreApplication>
@@ -49,6 +49,13 @@ AVController::AVController()
 
     m_currentlyOpenFile = QString("");
     m_xmlFileAlreadyExists = false;
+
+//    AVPQReader sample;
+//    int err_code=sample.Init();
+//    if(err_code != PQMTE_SUCCESS){
+//		cout << "no success" << endl;
+//		getchar();
+//	}
 }
 
 

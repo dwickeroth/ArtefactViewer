@@ -114,7 +114,7 @@ protected:
     void initializeGL();
     void paintGL();
     void resizeGL(int width, int height);
-    bool AVGLWidget::event(QEvent * event);
+    //bool AVGLWidget::event(QEvent * event);
     void mousePressEvent(QMouseEvent *event);
     void mouseReleaseEvent(QMouseEvent *event);
     void mouseDoubleClickEvent(QMouseEvent *event);
