@@ -31,6 +31,7 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 #include "avmodel.h"
 #include "avmainwindow.h"
 #include "avtrackball.h"
+#include "avpqreader.h"
 #include "iostream"
 
 AVGLWidget::AVGLWidget(QWidget *parent) : QGLWidget(QGLFormat(QGL::SampleBuffers), parent)
@@ -960,7 +961,8 @@ bool AVGLWidget::event(QEvent *event)
 {
     if (event->type() == QEvent::TouchBegin) {
                 QTouchEvent *tap=static_cast<QTouchEvent *>(event);
-            std::cout << "That was your finger at " << tap->touchPoints().first().id() << std::endl;
+                AVPQReader sample;
+            std::cout << "That was your finger at " << tap->touchPoints().first().id() <<""<<sample.Init()<< std::endl;
 
             if(!m_shiftDown) m_trackball->push(pixelPosToViewPos(tap->touchPoints().first().pos()), QQuaternion());
             m_lastMousePosition = tap->touchPoints().first().lastPos().toPoint();

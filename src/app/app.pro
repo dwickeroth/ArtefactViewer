@@ -26,7 +26,8 @@ SOURCES +=\
     avmain.cpp \
     avtrackball.cpp \
     avoffscreendialog.cpp \
-    avlight.cpp
+    avlight.cpp \
+    avpqreader.cpp
 
 HEADERS  += avmainwindow.h \
     avcontroller.h \
@@ -37,7 +38,9 @@ HEADERS  += avmainwindow.h \
     avplugininterfaces.h \
     avtrackball.h \
     avoffscreendialog.h \
-    avlight.h
+    avlight.h \
+    PQMTClient.h \
+    avpqreader.h
 
 FORMS    += avmainwindow.ui \
     about.ui \
@@ -56,3 +59,8 @@ first.depends = $(first) copymanual
 export(first.depends)
 export(copymanual.commands)
 QMAKE_EXTRA_TARGETS += first copymanual
+
+win32: LIBS += -L$$PWD/../lib/x64/ -lPQMTClient
+
+INCLUDEPATH += $$PWD/../include
+DEPENDPATH += $$PWD/../include
