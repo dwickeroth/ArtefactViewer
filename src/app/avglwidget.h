@@ -29,6 +29,7 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 #include <QGLFunctions>
 
 #include "avlight.h"
+#include "avtrackball.h"
 
 class AVModel;
 class AVTrackBall;
@@ -41,6 +42,8 @@ class AVGLWidget: public QGLWidget, protected QGLFunctions
 public:
     AVGLWidget(QWidget *parent = 0);
     ~AVGLWidget();
+    AVTrackBall*  m_trackball;
+
 
     void    initialize();
 
@@ -70,6 +73,9 @@ public:
     bool isShiftDown() const;
     void setShiftDown(bool shiftDown);
 
+//    AVTrackBall getTrackBall() const;
+//    void setTrackBall(AVTrackBall trackBall);
+
     bool getLightsAreVisible() const;
     void setLightsAreVisible(bool lightsAreVisible);
 
@@ -84,6 +90,9 @@ public:
 
     double getCamDistanceToOrigin() const;
     void setCamDistanceToOrigin(double getCamDistanceToOrigin);
+
+    QPoint getLastMousePosition() const;
+    void setLastMousePosition(QPoint lastMousePosition);
 
     QVector3D getCamOrigin() const;
     void setCamOrigin(const QVector3D &camOrigin);
@@ -134,6 +143,8 @@ private:
 
 private:
     //private members with getters/setters
+//    AVTrackBall*  m_trackball;
+
     int         m_selectedPoint;
     int         m_draggedPoint;
     int         m_currentAnnotation;
@@ -147,8 +158,8 @@ private:
     bool        m_paintAnnotations;
 
     double      m_camDistanceToOrigin;
-    double      m_eyeSeparation;
 
+    QPoint      m_lastMousePosition;
     QVector3D   m_camOrigin;
     QVector3D   m_camPosition;
     QVector3D   m_LeftCamPosition;
@@ -161,9 +172,9 @@ private:
 
     //private members without getters/setters
     AVModel*    m_model;
-    AVTrackBall*  m_trackball;
 
-    QPoint      m_lastMousePosition;
+    double      m_eyeSeparation;
+
     QMatrix4x4  m_pMatrix;
     QMatrix4x4  m_vMatrix;
     QMatrix4x4  m_LeftVMatrix;

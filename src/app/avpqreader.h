@@ -1,16 +1,60 @@
 #ifndef AVPQREADER_H
 #define AVPQREADER_H
 #include "PQMTClient.h"
+#include <QMutex>
+
+#include <QPoint>
+#include <QPointF>
+#include "avglwidget.h"
+
 
 using namespace PQ_SDK_MultiTouch;
 
 class AVPQReader
 {
 public:
-    AVPQReader();
-    ~AVPQReader();
+
+    static AVPQReader* instance()
+    {
+        static QMutex mutex;
+        if(!m_instance)
+        {
+            mutex.lock();
+            if(!m_instance) m_instance = new AVPQReader;
+            mutex.unlock();
+        }
+        return m_instance;
+    }
+
+    static void destroy()
+    {
+        static QMutex mutex;
+        mutex.lock();
+        delete m_instance;
+        m_instance = 0;
+        mutex.unlock();
+    }
+
     int Init();
+    void setGLWidget(AVGLWidget* glWidget);
+
+
 private:
+
+    explicit AVPQReader();
+
+    // we leave just the declarations, so the compiler will warn us
+    // if we try to use those two functions by accident
+    AVPQReader(const AVPQReader &); //hide copy constructor
+    AVPQReader& operator=(const AVPQReader &); //hide assign op
+
+    ~AVPQReader();
+
+    AVGLWidget*         m_glWidget;
+//    QPoint punto;
+    QPointF* punto;
+
+    static AVPQReader* m_instance;
 //////////////////////call back functions///////////////////////
     // OnReceivePointFrame: function to handle when recieve touch point frame
     //	the unmoving touch point won't be sent from server. The new touch point with its pointevent is TP_DOWN
@@ -66,6 +110,8 @@ private:
     static void OnTG_SplitApart(const TouchGesture & tg,void * call_object);
     static void OnTG_SplitClose(const TouchGesture & tg,void * call_object);
     static void OnTG_SplitEnd(const TouchGesture & tg,void * call_object);
+
+    QPointF AVPQReader::pixelPosToViewPos(QPointF *p);
 
     // OnTG_TouchEnd: to clear what need to clear;
     static void OnTG_TouchEnd(const TouchGesture & tg,void * call_object);

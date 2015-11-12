@@ -1,5 +1,11 @@
 #include "avpqreader.h"
+#include "avglwidget.h"
 #include "PQMTClient.h"
+#include "avtrackball.h"
+
+
+#include <QPoint>
+#include <QPointF>
 
 #include <iostream>
 #include <set>
@@ -8,6 +14,8 @@
 #include <functional>
 //using namespace PQ_SDK_MultiTouch;
 using namespace std;
+
+AVPQReader* AVPQReader::m_instance = 0;
 
 AVPQReader::AVPQReader()
 {
@@ -97,6 +105,15 @@ void AVPQReader::SetFuncsOnReceiveProc()
     PFuncOnGetDeviceInfo old_gdi_func = SetOnGetDeviceInfo(&AVPQReader::OnGetDeviceInfo,NULL);
 }
 
+
+void AVPQReader::setGLWidget(AVGLWidget *glWidget)
+{
+    m_glWidget=glWidget;
+//    m_glWidget->initialize();
+}
+
+
+
 void AVPQReader:: OnReceivePointFrame(int frame_id, int time_stamp, int moving_point_count, const TouchPoint * moving_point_array, void * call_back_object)
 {
     AVPQReader * sample = static_cast<AVPQReader*>(call_back_object);
@@ -108,13 +125,14 @@ void AVPQReader:: OnReceivePointFrame(int frame_id, int time_stamp, int moving_p
         "up",
     };
 
-    cout << " frame_id:" << frame_id << " time:"  << time_stamp << " ms" << " moving point count:" << moving_point_count << endl;
+//    cout << " frame_id:" << frame_id << " time:"  << time_stamp << " ms" << " moving point count:" << moving_point_count << endl;
     for(int i = 0; i < moving_point_count; ++ i){
         TouchPoint tp = moving_point_array[i];
         sample->OnTouchPoint(tp);
     }
     //throw exception("test exception here");
 }
+
 void AVPQReader:: OnReceiveGesture(const TouchGesture & ges, void * call_back_object)
 {
     AVPQReader * sample = static_cast<AVPQReader*>(call_back_object);
@@ -158,15 +176,39 @@ void AVPQReader::OnGetDeviceInfo(const TouchDeviceInfo & deviceinfo,void *call_b
 //	you can do mouse map like "OnTG_Down" etc;
 void AVPQReader:: OnTouchPoint(const TouchPoint & tp)
 {
+//    punto=new QPoint(tp.x,tp.y);
+      punto=new QPointF(tp.x,tp.y);
+//      AVTrackBall m_trackball=m_glWidget->m_trackball;
+//    punto.x=tp.x;
+//    punto.y=tp.y;
+//    punto.dx=tp.dx;
+//    punto.dy=tp.dy;
+
     switch(tp.point_event)
     {
     case TP_DOWN:
         cout << "  point " << tp.id << " come at (" << tp.x << "," << tp.y
              << ") width:" << tp.dx << " height:" << tp.dy << endl;
+
+        if(!m_glWidget->isShiftDown()) m_glWidget->m_trackball->push(pixelPosToViewPos(punto), QQuaternion());
+            m_glWidget->setLastMousePosition(punto->toPoint());
+            std::cout << "That was a touch down, punto x:"<<punto->x()<<"touchpoint x: "<<tp.x<< std::endl;
+
         break;
     case TP_MOVE:
-        cout << "  point " << tp.id << " move at (" << tp.x << "," << tp.y
-             << ") width:" << tp.dx << " height:" << tp.dy << endl;
+//        cout << "  point " << tp.id << " move at (" << tp.x << "," << tp.y
+//             << ") width:" << tp.dx << " height:" << tp.dy << endl;
+
+//                  cout<<"I have a Widget! whose Cam Dist2Origin is: "<<m_glWidget->getCamDistanceToOrigin()<<endl;
+//                QVector3D intersectionPoint;
+//                m_glWidget->getIntersectionPoint(QPoint(tp.x, tp.y), &intersectionPoint,m_glWidget->m_vMatrix);
+//                if (!intersectionPoint.isNull())
+//                {
+//                    m_glWidget->m_model->m_listOfPointClouds.last().points[m_draggedPoint] = (m_glWidget->m_MatrixArtefact.inverted() * intersectionPoint);
+//                    m_glWidget->updateGL();
+//                }
+
+
         break;
     case TP_UP:
         cout << "  point " << tp.id << " leave at (" << tp.x << "," << tp.y
@@ -189,26 +231,26 @@ void AVPQReader:: OnTouchGesture(const TouchGesture & tg)
 void AVPQReader:: OnTG_TouchStart(const TouchGesture & tg,void * call_object)
 {
     assert(tg.type == TG_TOUCH_START);
-    cout << "  here, the touch start, initialize something." << endl;
+//    cout << "  here, the touch start, initialize something." << endl;
 }
 void AVPQReader:: DefaultOnTG(const TouchGesture & tg,void * call_object) // just show the gesture
 {
-    cout <<"ges,name:"<< GetGestureName(tg) << " type:" << tg.type << ",param size:" << tg.param_size << " ";
-    for(int i = 0; i < tg.param_size; ++ i)
-        cout << tg.params[i] << " ";
-    cout << endl;
+//    cout <<"ges,name:"<< GetGestureName(tg) << " type:" << tg.type << ",param size:" << tg.param_size << " ";
+//    for(int i = 0; i < tg.param_size; ++ i)
+//        cout << tg.params[i] << " ";
+//    cout << endl;
 }
 void AVPQReader:: OnTG_Down(const TouchGesture & tg,void * call_object)
 {
     assert(tg.type == TG_DOWN && tg.param_size >= 2);
-    cout << "  the single finger touching at :( "
-         << tg.params[0] << "," << tg.params[1] << " )" << endl;
+//    cout << "  the single finger touching at :( "
+//         << tg.params[0] << "," << tg.params[1] << " )" << endl;
 }
 void AVPQReader:: OnTG_Move(const TouchGesture & tg,void * call_object)
 {
     assert(tg.type == TG_MOVE && tg.param_size >= 2);
-    cout << "  the single finger moving on the screen at :( "
-         << tg.params[0] << "," << tg.params[1] << " )" << endl;
+//    cout << "  the single finger moving on the screen at :( "
+//         << tg.params[0] << "," << tg.params[1] << " )" << endl;
 }
 void AVPQReader:: OnTG_Up(const TouchGesture & tg,void * call_object)
 {
@@ -220,10 +262,10 @@ void AVPQReader:: OnTG_Up(const TouchGesture & tg,void * call_object)
 void AVPQReader:: OnTG_SecondDown(const TouchGesture & tg,void * call_object)
 {
     assert(tg.type == TG_SECOND_DOWN && tg.param_size >= 4);
-    cout << "  the second finger touching at :( "
-         << tg.params[0] << "," << tg.params[1] << " ),"
-         << " after the first finger touched at :( "
-         << tg.params[2] << "," << tg.params[3] << " )" << endl;
+//    cout << "  the second finger touching at :( "
+//         << tg.params[0] << "," << tg.params[1] << " ),"
+//         << " after the first finger touched at :( "
+//         << tg.params[2] << "," << tg.params[3] << " )" << endl;
 }
 void AVPQReader:: OnTG_SecondUp(const TouchGesture & tg,void * call_object)
 {
@@ -268,6 +310,15 @@ void AVPQReader:: OnTG_SplitEnd(const TouchGesture & tg,void * call_object)
          << tg.params[2] << "," << tg.params[3] << " )"
          << " will end" << endl;
 }
+
+//AVWidget Routine to convert a point in widget coordinates to openGL coordinates and return a QPointF
+
+QPointF AVPQReader::pixelPosToViewPos(QPointF *p)
+{
+    return QPointF(2.0 * float(p->x()) / m_glWidget->width() - 1.0,
+                   1.0 - 2.0 * float(p->y()) / m_glWidget->height());
+}
+
 // OnTG_TouchEnd: to clear what need to clear
 void AVPQReader:: OnTG_TouchEnd(const TouchGesture & tg,void * call_object)
 {

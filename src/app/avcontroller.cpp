@@ -18,6 +18,11 @@ AVController::AVController()
 {
     m_mainWindow = AVMainWindow::instance();
     m_glWidget = new AVGLWidget(m_mainWindow);
+    m_pqReader= AVPQReader::instance();
+
+    int err_code=m_pqReader->Init();
+        std::cout<<"We started the PQReader, the initialization code is "<<err_code<<std::endl;
+    m_pqReader->setGLWidget(m_glWidget);
     m_glWidget->setFocusPolicy(Qt::StrongFocus);
     m_mainWindow->setGLWidget(m_glWidget);
     m_mainWindow->showMaximized();
@@ -28,34 +33,14 @@ AVController::AVController()
 
     //set plugins dir in plugin manager
     QDir pluginsDir = QCoreApplication::applicationDirPath();
-/*
-    #if defined(Q_OS_WIN)
-        while(pluginsDir.dirName().endsWith("debug", Qt::CaseInsensitive) || pluginsDir.dirName().endsWith("release", Qt::CaseInsensitive))
-            pluginsDir.cdUp();
-    #elif defined(Q_OS_LINUX)
-        while(pluginsDir.dirName().endsWith("debug", Qt::CaseInsensitive) || pluginsDir.dirName().endsWith("release", Qt::CaseInsensitive))
-            pluginsDir.cdUp();
-    #elif defined(Q_OS_MAC)
-        if (pluginsDir.dirName() == "MacOS") {
-            pluginsDir.cdUp();
-            pluginsDir.cdUp();
-            pluginsDir.cdUp();
-        }
-    #endif
-*/
+
+    //TODO: Versioning for mac and linux, insert here
+
     pluginsDir.cd("plugins");
     m_pluginManager->setPluginsDir(pluginsDir.canonicalPath());
     m_pluginManager->loadPlugins();
-
     m_currentlyOpenFile = QString("");
     m_xmlFileAlreadyExists = false;
-
-//    AVPQReader sample;
-//    int err_code=sample.Init();
-//    if(err_code != PQMTE_SUCCESS){
-//		cout << "no success" << endl;
-//		getchar();
-//	}
 }
 
 
@@ -64,6 +49,7 @@ AVController::~AVController()
     m_pluginManager->destroy();
     m_model->destroy();
     m_mainWindow->destroy();
+    m_pqReader->destroy();
 }
 
 
@@ -89,7 +75,6 @@ int AVController::readFile(QString filename)
 
     m_mainWindow->initialize();
     m_glWidget->initialize();
-
     QString filePath = fileInfo.path();
     QString fileBaseName = fileInfo.baseName();
     m_currentlyOpenFile = filePath.append("/" +  fileBaseName);

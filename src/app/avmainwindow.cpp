@@ -8,6 +8,7 @@
 #include "avplugininterfaces.h"
 #include "avcontroller.h"
 #include "avoffscreendialog.h"
+#include "avpqreader.h"
 
 #include <QKeyEvent>
 #include <QMessageBox>
@@ -18,7 +19,7 @@
 #include <QInputDialog>
 
 #include <iostream>
-
+//TODO P: change this declaration to .h file
 bool k_Ctrl=false;
 AVMainWindow* AVMainWindow::m_instance = 0;
 
@@ -58,6 +59,7 @@ void AVMainWindow::setGLWidget(AVGLWidget *glWidget)
 
     initialize();
     m_glWidget->initialize();
+
 }
 
 
@@ -132,8 +134,19 @@ void AVMainWindow::keyPressEvent(QKeyEvent *e)
         on_actionSave_triggered();
     if(k_Ctrl&&e->key()==Qt::Key_F)
         on_actionFullscreen_triggered();
-    if(k_Ctrl&&e->key()==Qt::Key_T)
+    if(k_Ctrl&&e->key()==Qt::Key_P)
         on_actionScreenshot_triggered();
+
+//    TODO: implement shortcut to activate touch input
+//    if(k_Ctrl&&e->key()==Qt::Key_T){
+//    AVPQReader sample;
+//    int err_code=sample.Init();
+//    if(err_code != PQMTE_SUCCESS){
+//        std::cout << "no success" << std::endl;
+//    }
+
+//    }
+
 
 }
 

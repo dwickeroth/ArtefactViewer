@@ -2,6 +2,7 @@
 #include "avmainwindow.h"
 #include "avplugininterfaces.h"
 #include "avcontroller.h"
+#include "avpqreader.h"
 
 #include <iostream>
 
@@ -83,5 +84,6 @@ void AVPluginManager::loadPlugins()
             }
         }
     }
+
 }
 

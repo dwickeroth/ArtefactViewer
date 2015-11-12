@@ -43,8 +43,9 @@ AVGLWidget::AVGLWidget(QWidget *parent) : QGLWidget(QGLFormat(QGL::SampleBuffers
     stereoFormat.setSampleBuffers(true);
     stereoFormat.setStereo(true);
     this->setFormat(stereoFormat);
-    this->setAttribute(Qt::WA_AcceptTouchEvents,true);
-    this->setCursor(Qt::BlankCursor);
+//    this->setAttribute(Qt::WA_AcceptTouchEvents,true);
+//    Hide the cursor
+//    this->setCursor(Qt::BlankCursor);
     initialize();
     setAutoFillBackground(false);
     setAutoBufferSwap(false);
@@ -224,6 +225,15 @@ void AVGLWidget::setCamDistanceToOrigin(double camDistanceToOrigin)
     m_camDistanceToOrigin = camDistanceToOrigin;
 }
 
+QPoint AVGLWidget::getLastMousePosition() const
+{
+    return m_lastMousePosition;
+}
+void AVGLWidget::setLastMousePosition(QPoint lastMousePosition)
+{
+    m_lastMousePosition = lastMousePosition;
+}
+
 QVector3D AVGLWidget::getCamOrigin() const
 {
     return m_camOrigin;
@@ -277,6 +287,17 @@ void AVGLWidget::setShiftDown(bool shiftDown)
 {
     m_shiftDown = shiftDown;
 }
+
+//AVTrackBall AVGLWidget::getTrackBall() const
+//{
+//    return m_trackball;
+//}
+//void AVGLWidget::setTrackBall(AVTrackBall trackBall)
+//{
+//    m_trackball = trackBall;
+//}
+
+
 
 int AVGLWidget::getEnhancementParam(int i, int j) const
 {
@@ -992,7 +1013,7 @@ void AVGLWidget::mousePressEvent(QMouseEvent *event)
     {
         if(!m_shiftDown) m_trackball->push(pixelPosToViewPos(event->localPos()), QQuaternion());
         m_lastMousePosition = event->pos();
-        std::cout << "That was the mouse" << std::endl;
+        std::cout << "That was the mouse at:"<<event->localPos().x() << std::endl;
     }
     else if (event->buttons() & Qt::RightButton)
     {

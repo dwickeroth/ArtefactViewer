@@ -10,6 +10,7 @@ class AVMainWindow;
 class AVPluginManager;
 class AVModel;
 class AVGLWidget;
+class AVPQReader;
 
 class AVController
 {
@@ -56,6 +57,7 @@ private:
     AVPluginManager*        m_pluginManager;
     AVModel*                m_model;
     AVGLWidget*             m_glWidget;
+    AVPQReader*             m_pqReader;
 
     QString                 m_currentlyOpenFile;
     bool                    m_xmlFileAlreadyExists;
