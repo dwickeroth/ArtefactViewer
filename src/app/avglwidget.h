@@ -43,6 +43,7 @@ public:
     AVGLWidget(QWidget *parent = 0);
     ~AVGLWidget();
     AVTrackBall*  m_trackball;
+    AVModel*    m_model;
 
 
     void    initialize();
@@ -129,6 +130,7 @@ protected:
     void mouseDoubleClickEvent(QMouseEvent *event);
     void mouseMoveEvent(QMouseEvent *event);
     void wheelEvent(QWheelEvent *event);
+    QMatrix4x4  m_MatrixArtefact;
 
 
 private:
@@ -167,12 +169,7 @@ private:
     QVector3D   m_backgroundColor1;
     QVector3D   m_backgroundColor2;
 
-    QMatrix4x4  m_MatrixArtefact;
-
-
     //private members without getters/setters
-    AVModel*    m_model;
-
     double      m_eyeSeparation;
 
     QMatrix4x4  m_pMatrix;

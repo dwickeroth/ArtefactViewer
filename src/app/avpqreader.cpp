@@ -2,11 +2,12 @@
 #include "avglwidget.h"
 #include "PQMTClient.h"
 #include "avtrackball.h"
+#include "avmodel.h"
 
 
 #include <QPoint>
 #include <QPointF>
-
+#include <QVector3D>
 #include <iostream>
 #include <set>
 #include <map>
@@ -192,10 +193,24 @@ void AVPQReader:: OnTouchPoint(const TouchPoint & tp)
 
         if(!m_glWidget->isShiftDown()) m_glWidget->m_trackball->push(pixelPosToViewPos(punto), QQuaternion());
             m_glWidget->setLastMousePosition(punto->toPoint());
-            std::cout << "That was a touch down, punto x:"<<punto->x()<<"touchpoint x: "<<tp.x<< std::endl;
+            std::cout << "That was a touch down, punto x: "<<punto->x()<<"touchpoint x: "<<tp.x<< std::endl;
 
         break;
     case TP_MOVE:
+        if(!m_glWidget->isShiftDown()) m_glWidget->m_trackball->push(pixelPosToViewPos(punto), QQuaternion());
+        m_glWidget->setLastMousePosition(punto->toPoint());
+        if(!m_glWidget->isShiftDown()){
+            QQuaternion rotation = m_glWidget->m_trackball->move(pixelPosToViewPos(punto), m_glWidget->getMatrixArtefact());
+
+            m_glWidget->getMatrixArtefact().translate(m_glWidget->m_model->m_centerPoint);
+            m_glWidget->getMatrixArtefact().translate(m_glWidget->getCamOrigin());
+            m_glWidget->getMatrixArtefact().rotate(rotation);
+            m_glWidget->getMatrixArtefact().translate(-m_glWidget->getCamOrigin());
+            m_glWidget->getMatrixArtefact().translate(-m_glWidget->m_model->m_centerPoint);
+            std::cout << "That was a touch move, punto x: "<<punto->x()<<"touchpoint x: "<<tp.x<< std::endl;
+
+        }
+
 //        cout << "  point " << tp.id << " move at (" << tp.x << "," << tp.y
 //             << ") width:" << tp.dx << " height:" << tp.dy << endl;
 

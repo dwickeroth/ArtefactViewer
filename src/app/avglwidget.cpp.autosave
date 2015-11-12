@@ -1112,7 +1112,8 @@ void AVGLWidget::mouseReleaseEvent(QMouseEvent *event)
 */
 void AVGLWidget::mouseMoveEvent(QMouseEvent *event)
 {
-
+    
+    
     double deltaX = event->x() - m_lastMousePosition.x();
     double deltaY = event->y() - m_lastMousePosition.y();
 
