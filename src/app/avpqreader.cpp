@@ -4,6 +4,7 @@
 #include "avtrackball.h"
 #include "avmodel.h"
 
+#include <QTouchEvent>
 
 #include <QPoint>
 #include <QPointF>
@@ -178,7 +179,7 @@ void AVPQReader::OnGetDeviceInfo(const TouchDeviceInfo & deviceinfo,void *call_b
 void AVPQReader:: OnTouchPoint(const TouchPoint & tp)
 {
 //    punto=new QPoint(tp.x,tp.y);
-      punto=new QPointF(tp.x,tp.y);
+//      punto=new QPointF(tp.x,tp.y);
 //      AVTrackBall m_trackball=m_glWidget->m_trackball;
 //    punto.x=tp.x;
 //    punto.y=tp.y;
@@ -190,26 +191,26 @@ void AVPQReader:: OnTouchPoint(const TouchPoint & tp)
     case TP_DOWN:
         cout << "  point " << tp.id << " come at (" << tp.x << "," << tp.y
              << ") width:" << tp.dx << " height:" << tp.dy << endl;
-
-        if(!m_glWidget->isShiftDown()) m_glWidget->m_trackball->push(pixelPosToViewPos(punto), QQuaternion());
-            m_glWidget->setLastMousePosition(punto->toPoint());
-            std::cout << "That was a touch down, punto x: "<<punto->x()<<"touchpoint x: "<<tp.x<< std::endl;
+//        tap=new QTouchEvent(194,0,Qt::NoModifier,0,tp);
+//        if(!m_glWidget->isShiftDown()) m_glWidget->m_trackball->push(pixelPosToViewPos(punto), QQuaternion());
+//            m_glWidget->setLastMousePosition(punto->toPoint());
+//            std::cout << "That was a touch down, punto x: "<<punto->x()<<"touchpoint x: "<<tp.x<< std::endl;
 
         break;
     case TP_MOVE:
-        if(!m_glWidget->isShiftDown()) m_glWidget->m_trackball->push(pixelPosToViewPos(punto), QQuaternion());
-        m_glWidget->setLastMousePosition(punto->toPoint());
-        if(!m_glWidget->isShiftDown()){
-            QQuaternion rotation = m_glWidget->m_trackball->move(pixelPosToViewPos(punto), m_glWidget->getMatrixArtefact());
+//        if(!m_glWidget->isShiftDown()) m_glWidget->m_trackball->push(pixelPosToViewPos(punto), QQuaternion());
+//        m_glWidget->setLastMousePosition(punto->toPoint());
+//        if(!m_glWidget->isShiftDown()){
+//            QQuaternion rotation = m_glWidget->m_trackball->move(pixelPosToViewPos(punto), m_glWidget->getMatrixArtefact());
 
-            m_glWidget->getMatrixArtefact().translate(m_glWidget->m_model->m_centerPoint);
-            m_glWidget->getMatrixArtefact().translate(m_glWidget->getCamOrigin());
-            m_glWidget->getMatrixArtefact().rotate(rotation);
-            m_glWidget->getMatrixArtefact().translate(-m_glWidget->getCamOrigin());
-            m_glWidget->getMatrixArtefact().translate(-m_glWidget->m_model->m_centerPoint);
-            std::cout << "That was a touch move, punto x: "<<punto->x()<<"touchpoint x: "<<tp.x<< std::endl;
+//            m_glWidget->getMatrixArtefact().translate(m_glWidget->m_model->m_centerPoint);
+//            m_glWidget->getMatrixArtefact().translate(m_glWidget->getCamOrigin());
+//            m_glWidget->getMatrixArtefact().rotate(rotation);
+//            m_glWidget->getMatrixArtefact().translate(-m_glWidget->getCamOrigin());
+//            m_glWidget->getMatrixArtefact().translate(-m_glWidget->m_model->m_centerPoint);
+//            std::cout << "That was a touch move, punto x: "<<punto->x()<<"touchpoint x: "<<tp.x<< std::endl;
 
-        }
+//        }
 
 //        cout << "  point " << tp.id << " move at (" << tp.x << "," << tp.y
 //             << ") width:" << tp.dx << " height:" << tp.dy << endl;

@@ -43,9 +43,10 @@ AVGLWidget::AVGLWidget(QWidget *parent) : QGLWidget(QGLFormat(QGL::SampleBuffers
     stereoFormat.setSampleBuffers(true);
     stereoFormat.setStereo(true);
     this->setFormat(stereoFormat);
-//    this->setAttribute(Qt::WA_AcceptTouchEvents,true);
+//    accept touch events from Windows native
+    this->setAttribute(Qt::WA_AcceptTouchEvents,true);
 //    Hide the cursor
-//    this->setCursor(Qt::BlankCursor);
+    this->setCursor(Qt::BlankCursor);
     initialize();
     setAutoFillBackground(false);
     setAutoBufferSwap(false);
@@ -978,19 +979,19 @@ void AVGLWidget::drawOverlays(QPaintDevice *device, bool offscreen, int fboWidth
 /////////////////////////////////////////////////////////////////
 
 
-//bool AVGLWidget::event(QEvent *event)
-//{
-//    if (event->type() == QEvent::TouchBegin) {
-//                QTouchEvent *tap=static_cast<QTouchEvent *>(event);
-//            std::cout << "That was your finger at " << tap->touchPoints().first().id() <<""<<sample.Init()<< std::endl;
+bool AVGLWidget::event(QEvent *event)
+{
+    if (event->type() == QEvent::TouchBegin) {
+                QTouchEvent *tap=static_cast<QTouchEvent *>(event);
+            std::cout << "That was your finger at " << tap->touchPoints().first().id() << std::endl;
 
-//            if(!m_shiftDown) m_trackball->push(pixelPosToViewPos(tap->touchPoints().first().pos()), QQuaternion());
-//            m_lastMousePosition = tap->touchPoints().first().lastPos().toPoint();
-//            std::cout << "Your finger did that" << std::endl;
-//            return true;
-//    }
-//    return QWidget::event(event);
-//}
+            if(!m_shiftDown) m_trackball->push(pixelPosToViewPos(tap->touchPoints().first().pos()), QQuaternion());
+            m_lastMousePosition = tap->touchPoints().first().lastPos().toPoint();
+            std::cout << "Your finger did that" << std::endl;
+            return true;
+    }
+    return QWidget::event(event);
+}
 
 
 //! Handles mouse button press events
@@ -1112,7 +1113,8 @@ void AVGLWidget::mouseReleaseEvent(QMouseEvent *event)
 */
 void AVGLWidget::mouseMoveEvent(QMouseEvent *event)
 {
-
+    
+    
     double deltaX = event->x() - m_lastMousePosition.x();
     double deltaY = event->y() - m_lastMousePosition.y();
 

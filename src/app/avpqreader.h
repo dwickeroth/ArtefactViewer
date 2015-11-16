@@ -3,6 +3,8 @@
 #include "PQMTClient.h"
 #include <QMutex>
 
+#include <QTouchEvent>
+
 #include <QPoint>
 #include <QPointF>
 #include "avglwidget.h"
@@ -86,6 +88,9 @@ private:
 
     // OnTouchPoint: function to handle TouchPoint
     void OnTouchPoint(const TouchPoint & tp);
+
+    QTouchEvent* tap;
+
 
     // OnTouchGesture: function to handle TouchGesture
     void OnTouchGesture(const TouchGesture & tg);
