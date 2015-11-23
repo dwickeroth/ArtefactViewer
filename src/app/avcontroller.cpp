@@ -18,11 +18,11 @@ AVController::AVController()
 {
     m_mainWindow = AVMainWindow::instance();
     m_glWidget = new AVGLWidget(m_mainWindow);
-    m_pqReader= AVPQReader::instance();
+//    m_pqReader= AVPQReader::instance();
 
-    int err_code=m_pqReader->Init();
-        std::cout<<"We started the PQReader, the initialization code is "<<err_code<<std::endl;
-    m_pqReader->setGLWidget(m_glWidget);
+//    int err_code=m_pqReader->Init();
+//        std::cout<<"We started the PQReader, the initialization code is "<<err_code<<std::endl;
+//    m_pqReader->setGLWidget(m_glWidget);
     m_glWidget->setFocusPolicy(Qt::StrongFocus);
     m_mainWindow->setGLWidget(m_glWidget);
     m_mainWindow->showMaximized();
