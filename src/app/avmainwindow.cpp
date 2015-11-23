@@ -128,18 +128,14 @@ void AVMainWindow::keyPressEvent(QKeyEvent *e)
         on_pushButton_clock_clicked();
     }
 //keyboard shortcuts
-    if(k_Ctrl&&e->key()==Qt::Key_F)
-        on_actionFullscreen_triggered();
     if(k_Ctrl&&e->key()==Qt::Key_O)
         on_actionOpen_triggered();
     if(k_Ctrl&&e->key()==Qt::Key_S)
         on_actionSave_triggered();
+    if(k_Ctrl&&e->key()==Qt::Key_F)
+        on_actionFullscreen_triggered();
     if(k_Ctrl&&e->key()==Qt::Key_P)
         on_actionScreenshot_triggered();
-    if(k_Ctrl&&e->key()==Qt::Key_M)
-      m_glWidget->setCursor(Qt::ArrowCursor);
-    if(k_Ctrl&&e->key()==Qt::Key_H)
-        m_glWidget->setCursor(Qt::BlankCursor);
 
 //    TODO: implement shortcut to activate touch input
 //    if(k_Ctrl&&e->key()==Qt::Key_T){
