@@ -27,7 +27,8 @@ SOURCES +=\
     avtrackball.cpp \
     avoffscreendialog.cpp \
     avlight.cpp \
-    avpqreader.cpp
+    avpqreader.cpp \
+    avtouchevent.cpp
 
 HEADERS  += avmainwindow.h \
     avcontroller.h \
@@ -40,7 +41,8 @@ HEADERS  += avmainwindow.h \
     avoffscreendialog.h \
     avlight.h \
     PQMTClient.h \
-    avpqreader.h
+    avpqreader.h \
+    avtouchevent.h
 
 FORMS    += avmainwindow.ui \
     about.ui \
