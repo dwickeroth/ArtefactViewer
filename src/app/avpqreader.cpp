@@ -91,7 +91,6 @@ int AVPQReader::Init()
 void AVPQReader:: InitFuncOnTG()
 {
     // initialize the call back functions of touch gestures;
-    cout<<"pointer functions initialized"<<endl;
     m_pf_on_tges[TG_TOUCH_START] = &AVPQReader::OnTG_TouchStart;
     m_pf_on_tges[TG_DOWN] = &AVPQReader::OnTG_Down;
     m_pf_on_tges[TG_MOVE] = &AVPQReader::OnTG_Move;
@@ -131,6 +130,7 @@ void AVPQReader::setGLWidget(AVGLWidget *glWidget)
 void AVPQReader:: OnReceivePointFrame(int frame_id, int time_stamp, int moving_point_count, const TouchPoint * moving_point_array, void * call_back_object)
 {
     AVPQReader * sample = static_cast<AVPQReader*>(call_back_object);
+
     assert(sample != NULL);
     const char * tp_event[] =
     {
@@ -144,7 +144,7 @@ void AVPQReader:: OnReceivePointFrame(int frame_id, int time_stamp, int moving_p
         TouchPoint tp = moving_point_array[i];
         sample->OnTouchPoint(tp);
     }
-    //throw exception("test exception here");
+    throw exception("test exception here");
 }
 
 void AVPQReader:: OnReceiveGesture(const TouchGesture & ges, void * call_back_object)
@@ -171,8 +171,8 @@ void AVPQReader::OnReceiveError(int err_code, void * call_back_object)
         cout << " error: the multi-touch server is old for this client, please update the multi-touch server." << endl;
         break;
     case PQMTE_EXCEPTION_FROM_CALLBACKFUNCTION:
-        cout << "**** some exceptions thrown from the call back functions." << endl;
-        assert(0); //need to add try/catch in the callback functions to fix the bug;
+//        cout << "**** some exceptions thrown from the call back functions." << endl;
+//        assert(0); //need to add try/catch in the callback functions to fix the bug;
         break;
     default:
         cout << " socket error, socket error code:" << err_code << endl;
@@ -191,67 +191,49 @@ void AVPQReader::OnGetDeviceInfo(const TouchDeviceInfo & deviceinfo,void *call_b
 //	you can do mouse map like "OnTG_Down" etc;
 void AVPQReader:: OnTouchPoint(const TouchPoint & tp)
 {
-    pos.setX(tp.x);
-    pos.setY(tp.y);
-
 //    Transfer information from touch point to QEvent
     AVTouchEvent e;
-//    cout<<"event created in OTP "<<endl;
     e.point_event=tp.point_event;
     e.id=tp.id;
     e.x=tp.x;
     e.y=tp.y;
     e.dx=tp.dx;
     e.dy=tp.dy;
+
 // SignalSlotApproach
     emit throwEvent(&e);
-    switch(tp.point_event)
-    {
-    case TP_DOWN:
-        cout << "  Finger " << tp.id << " touched at (" << tp.x << "," << tp.y
-             << ") width:" << tp.dx << " height:" << tp.dy << endl;
 
+//    switch(tp.point_event)
+//    {
+//    case TP_DOWN:
+//        cout << "  Finger " << tp.id << " touched at (" << tp.x << "," << tp.y
+//             << ") width:" << tp.dx << " height:" << tp.dy << endl;
+//        break;
+//    case TP_MOVE:
+//         cout<<"Finger "<<tp.id<<" is moving"<<endl;
+//        break;
 
-//        AVTEType=QEvent::registerEventType(-1);
-//        AVTouchEvent event(AVTEType,tp.x,tp.y,0) ;
-//        tap=new QTouchEvent(194,0,Qt::NoModifier,0,tp);
-//        if(!m_glWidget->isShiftDown()) m_glWidget->m_trackball->push(pixelPosToViewPos(punto), QQuaternion());
-//            m_glWidget->setLastMousePosition(punto->toPoint());
-
-        break;
-    case TP_MOVE:
-        break;
-
-    case TP_UP:
+//    case TP_UP:
 //        cout << "  Finger " << tp.id << " left at (" << tp.x << "," << tp.y
 //             << ") width:" << tp.dx << " height:" << tp.dy << endl;
-        break;
-    }
+//        break;
+//    }
 }
 
-//void AVPQReader:: OnTouchGesture(const TouchGesture & tg)
-//{
+void AVPQReader:: OnTouchGesture(const TouchGesture & tg)
+{
 
-//    if(TG_NO_ACTION == tg.type)
-//        return ;
+    if(TG_NO_ACTION == tg.type)
+        return ;
 
-//    assert(tg.type <= TG_TOUCH_END);
-///*    cout<<"Default"<<endl;
-//    AVTouchEvent e;
-//    cout<<"event created in default"<<endl;
-//    e.point_event=0;
-//    e.id=0;
-//    e.x=0;
-//    e.y=0;
-//    e.dx=0;
-//    e.dy=0;
-//    */
-////    DefaultOnTG(tg,this);
-//    PFuncOnTouchGesture pf = m_pf_on_tges[tg.type];
-//    if(NULL != pf){
-//        pf(tg,this);
-//    }
-//}
+    assert(tg.type <= TG_TOUCH_END);
+
+//    DefaultOnTG(tg,this);
+    PFuncOnTouchGesture pf = m_pf_on_tges[tg.type];
+    if(NULL != pf){
+        pf(tg,this);
+    }
+}
 
 void AVPQReader:: OnTG_TouchStart(const TouchGesture & tg,void * call_object)
 {
@@ -265,13 +247,10 @@ void AVPQReader:: DefaultOnTG(const TouchGesture & tg,void * call_object) // jus
 //        cout << tg.params[i] << " ";
 //    cout << endl;
 }
+
 void AVPQReader:: OnTG_Down(const TouchGesture & tg,void * call_object)
 {
     assert(tg.type == TG_DOWN && tg.param_size >= 2);
-
-
-
-
 //    cout << "A single finger touching at :( "
 //         << tg.params[0] << "," << tg.params[1] << " )" << endl;
 }
@@ -298,7 +277,7 @@ void AVPQReader:: OnTG_SecondDown(const TouchGesture & tg,void * call_object)
 }
 void AVPQReader:: OnTG_SecondUp(const TouchGesture & tg,void * call_object)
 {
-//    assert(tg.type == TG_SECOND_UP && tg.param_size >= 4);
+    assert(tg.type == TG_SECOND_UP && tg.param_size >= 4);
 //    cout << "  the second finger is leaving at :( "
 //         << tg.params[0] << "," << tg.params[1] << " ),"
 //         << " while the first finger still anchored around :( "
@@ -341,12 +320,6 @@ void AVPQReader:: OnTG_SplitEnd(const TouchGesture & tg,void * call_object)
 }
 
 //AVWidget Routine to convert a point in widget coordinates to openGL coordinates and return a QPointF
-
-QPointF AVPQReader::pixelPosToViewPos(QPointF *p)
-{
-    return QPointF(2.0 * float(p->x()) / m_glWidget->width() - 1.0,
-                   1.0 - 2.0 * float(p->y()) / m_glWidget->height());
-}
 
 // OnTG_TouchEnd: to clear what need to clear
 void AVPQReader:: OnTG_TouchEnd(const TouchGesture & tg,void * call_object)

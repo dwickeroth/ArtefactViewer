@@ -34,6 +34,7 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 #include "avpqreader.h"
 #include "avtouchevent.h"
 #include "iostream"
+#include "PQMTClient.h"
 
 AVGLWidget::AVGLWidget(QWidget *parent) : QGLWidget(QGLFormat(QGL::SampleBuffers), parent)
 {
@@ -45,7 +46,7 @@ AVGLWidget::AVGLWidget(QWidget *parent) : QGLWidget(QGLFormat(QGL::SampleBuffers
     stereoFormat.setStereo(true);
     this->setFormat(stereoFormat);
 //    accept touch events from Windows native
-    this->setAttribute(Qt::WA_AcceptTouchEvents,true);
+//    this->setAttribute(Qt::WA_AcceptTouchEvents,true);
 //    Hide the cursor
     this->setCursor(Qt::BlankCursor);
     initialize();
@@ -290,16 +291,6 @@ void AVGLWidget::setShiftDown(bool shiftDown)
     m_shiftDown = shiftDown;
 }
 
-//AVTrackBall AVGLWidget::getTrackBall() const
-//{
-//    return m_trackball;
-//}
-//void AVGLWidget::setTrackBall(AVTrackBall trackBall)
-//{
-//    m_trackball = trackBall;
-//}
-
-
 
 int AVGLWidget::getEnhancementParam(int i, int j) const
 {
@@ -486,12 +477,10 @@ void AVGLWidget::fillBuffers()
  */
 void AVGLWidget::paintGL()
 {
-
-    //    uncomment to check if we accept Touch Events by painting
-    //    boolean DoWe=this->testAttribute(Qt::WA_AcceptTouchEvents);
-    //    if(DoWe){std::cout << "we do!" << std::endl;}
+    //   check stereo format by painting
     //    QGLFormat formato=this->format();
-    //    if(formato.stereo()){std::cout << "it's on!" << std::endl;}
+    //    if(formato.stereo()){std::cout << "stereo format is on!" << std::endl;}
+
     // Select back left buffer
     glDrawBuffer(GL_BACK_LEFT);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -982,8 +971,29 @@ void AVGLWidget::drawOverlays(QPaintDevice *device, bool offscreen, int fboWidth
 
 void AVGLWidget::catchEvent(AVTouchEvent* event)
 {
-    std::cout<<"custom touch event at: ("<<event->x<<","<<event->y<<")"<<endl;
+    if((int)event->id<32){
+    switch(event->point_event)
+        {
+        case TP_DOWN:
+            cout << "  Finger " << event->id << " has touched the screen at (" << event->x << "," << event->y
+                 << ") width:" << event->dx << " height:" << event->dy << endl;
+            break;
+        case TP_MOVE:
+            cout<<"moving"<<endl;
+            break;
+
+        case TP_UP:
+            cout << "  Finger " << event->id << " left at (" << event->x << "," << event->y
+                 << ") width:" << event->dx << " height:" << event->dy << endl;
+            break;
+        }
+    }
 }
+
+
+
+
+
 
 ////spits out all event types
 //bool AVGLWidget::event(QEvent *event)

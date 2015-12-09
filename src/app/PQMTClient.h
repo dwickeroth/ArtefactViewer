@@ -199,11 +199,11 @@ void
 //	the action you want to take when receive the TouchGesture
 typedef
 PQMT_CLIENT_API
-void 
+void
 (*PFuncOnReceiveGesture)(
-	const TouchGesture &	gesture,
-	void *					call_back_object
-	);
+    const TouchGesture &	gesture,
+    void *					call_back_object
+    );
 
 // PFuncOnServerBreak
 //	the action you want to take when server interrupt the connection.
@@ -310,15 +310,15 @@ SetOnReceivePointFrame(
 	void *						call_back_object
 	);
 
-// SetOnReceiveGesture:
-//  Set the function that you want to execute while receiving the touch gesture.
-//		pf_on_rcv_gesture: The function pointer you want to execute while receiving the touch gesture.
+//// SetOnReceiveGesture:
+////  Set the function that you want to execute while receiving the touch gesture.
+////		pf_on_rcv_gesture: The function pointer you want to execute while receiving the touch gesture.
 PQMT_CLIENT_API
 PFuncOnReceiveGesture
 SetOnReceiveGesture(
-	PFuncOnReceiveGesture		pf_on_rcv_gesture,
-	void *						call_back_object
-	);
+    PFuncOnReceiveGesture		pf_on_rcv_gesture,
+    void *						call_back_object
+    );
 
 // SetOnServerBreak:
 //  Set the function that you want to execute while receive the message that the server interrupt the connection.

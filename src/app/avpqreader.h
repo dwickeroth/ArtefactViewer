@@ -43,6 +43,7 @@ public:
     int Init();
     void setGLWidget(AVGLWidget* glWidget);
     AVTouchEvent e;
+
 //SignalSlotApproach
 signals:
     void throwEvent(AVTouchEvent *event);
@@ -59,8 +60,6 @@ private:
     ~AVPQReader();
 
     AVGLWidget*         m_glWidget;
-//    QPoint punto;
-    QPointF punto,pos;
 
     static AVPQReader* m_instance;
 //////////////////////call back functions///////////////////////
@@ -99,8 +98,8 @@ private:
 
 
     // OnTouchGesture: function to handle TouchGesture
-//    void OnTouchGesture(const TouchGesture & tg);
-    //
+    void OnTouchGesture(const TouchGesture & tg);
+
 
     //here use function pointer table to handle the different gesture type;
     typedef void (*PFuncOnTouchGesture)(const TouchGesture & tg,void * call_object);
@@ -122,7 +121,6 @@ private:
     static void OnTG_SplitClose(const TouchGesture & tg,void * call_object);
     static void OnTG_SplitEnd(const TouchGesture & tg,void * call_object);
 
-    QPointF AVPQReader::pixelPosToViewPos(QPointF *p);
 
     // OnTG_TouchEnd: to clear what need to clear;
     static void OnTG_TouchEnd(const TouchGesture & tg,void * call_object);
