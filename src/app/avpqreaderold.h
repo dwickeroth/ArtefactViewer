@@ -8,15 +8,12 @@
 #include <QPoint>
 #include <QPointF>
 #include "avglwidget.h"
-#include "avtouchevent.h"
 
 
 using namespace PQ_SDK_MultiTouch;
 
-class AVPQReader : public QObject
+class AVPQReader
 {
-    Q_OBJECT
-
 public:
 
     static AVPQReader* instance()
@@ -42,14 +39,11 @@ public:
 
     int Init();
     void setGLWidget(AVGLWidget* glWidget);
-    AVTouchEvent e;
-//SignalSlotApproach
-signals:
-    void throwEvent(AVTouchEvent *event);
+
 
 private:
 
-    explicit AVPQReader(QObject* parent = 0);
+    explicit AVPQReader();
 
     // we leave just the declarations, so the compiler will warn us
     // if we try to use those two functions by accident
@@ -60,7 +54,7 @@ private:
 
     AVGLWidget*         m_glWidget;
 //    QPoint punto;
-    QPointF punto,pos;
+    QPointF* punto;
 
     static AVPQReader* m_instance;
 //////////////////////call back functions///////////////////////
@@ -99,7 +93,7 @@ private:
 
 
     // OnTouchGesture: function to handle TouchGesture
-//    void OnTouchGesture(const TouchGesture & tg);
+    void OnTouchGesture(const TouchGesture & tg);
     //
 
     //here use function pointer table to handle the different gesture type;

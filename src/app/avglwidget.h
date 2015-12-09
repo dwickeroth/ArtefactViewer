@@ -30,6 +30,7 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 
 #include "avlight.h"
 #include "avtrackball.h"
+#include "avtouchevent.h"
 
 class AVModel;
 class AVTrackBall;
@@ -109,6 +110,10 @@ public:
 
     QImage renderToOffscreenBuffer(int width, int height);
 
+
+public slots:
+    void catchEvent(AVTouchEvent *event);
+
 private:
     void setZoomLevel(double level, bool relative);
 
@@ -124,7 +129,8 @@ protected:
     void initializeGL();
     void paintGL();
     void resizeGL(int width, int height);
-    bool AVGLWidget::event(QEvent * event);
+    //to spit out all event types
+    //    bool event(QEvent *event);
     void mousePressEvent(QMouseEvent *event);
     void mouseReleaseEvent(QMouseEvent *event);
     void mouseDoubleClickEvent(QMouseEvent *event);
