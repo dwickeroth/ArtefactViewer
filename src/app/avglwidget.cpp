@@ -32,7 +32,6 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 #include "avmainwindow.h"
 #include "avtrackball.h"
 #include "avpqreader.h"
-#include "avtouchevent.h"
 #include "iostream"
 
 AVGLWidget::AVGLWidget(QWidget *parent) : QGLWidget(QGLFormat(QGL::SampleBuffers), parent)
@@ -980,17 +979,20 @@ void AVGLWidget::drawOverlays(QPaintDevice *device, bool offscreen, int fboWidth
 /////////////////////////////////////////////////////////////////
 
 
-void AVGLWidget::catchEvent(AVTouchEvent* event)
+bool AVGLWidget::event(QEvent *event)
 {
-    std::cout<<"custom touch event at: ("<<event->x<<","<<event->y<<")"<<endl;
+    if (event->type() == QEvent::TouchBegin) {
+                QTouchEvent *tap=static_cast<QTouchEvent *>(event);
+            std::cout << "That was your finger at " << tap->touchPoints().first().id() << std::endl;
+
+            if(!m_shiftDown) m_trackball->push(pixelPosToViewPos(tap->touchPoints().first().pos()), QQuaternion());
+            m_lastMousePosition = tap->touchPoints().first().lastPos().toPoint();
+            std::cout << "Your finger did that" << std::endl;
+            return true;
+    }
+    return QWidget::event(event);
 }
 
-////spits out all event types
-//bool AVGLWidget::event(QEvent *event)
-//{
-//    std::cout<<"Qevent of type "<<(int)event->type()<<endl;
-//    return QWidget::event(event);
-//}
 
 //! Handles mouse button press events
 /*! mousePressEvent is called on every frame that is drawn with a mouse button down and handles different actions
