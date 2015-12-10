@@ -44,9 +44,9 @@ AVGLWidget::AVGLWidget(QWidget *parent) : QGLWidget(QGLFormat(QGL::SampleBuffers
     stereoFormat.setSampleBuffers(true);
     stereoFormat.setStereo(true);
     this->setFormat(stereoFormat);
-//    accept touch events from Windows native
-    this->setAttribute(Qt::WA_AcceptTouchEvents,true);
-//    Hide the cursor
+    //    accept touch events from Windows native
+    //    this->setAttribute(Qt::WA_AcceptTouchEvents,true);
+    //    Hide the cursor
     this->setCursor(Qt::BlankCursor);
     initialize();
     setAutoFillBackground(false);
@@ -982,7 +982,63 @@ void AVGLWidget::drawOverlays(QPaintDevice *device, bool offscreen, int fboWidth
 
 void AVGLWidget::catchEvent(AVTouchEvent* event)
 {
-    std::cout<<"custom touch event at: ("<<event->x<<","<<event->y<<")"<<endl;
+    unsigned short top=(unsigned short)32;
+    unsigned short bottom=(unsigned short)0;
+    QPointF localPos;
+    localPos.setX((qreal) event->x);
+    localPos.setY((qreal) event->y);
+    //    cout<<(float)localPos.x()<<endl;
+    //    if((int)event->id<=top && (int)event->id>=bottom && (event->dx>1 || event->dy>1)){
+    if((float)localPos.x()>0 && (float)localPos.x()<1920){
+        cout<<"accepted event of type "<<(int)event->point_event<<" at: ("<<(float)localPos.x()<<" , "<<(float)localPos.y()<<")"<<endl;
+
+
+
+
+
+
+
+
+
+
+
+        // TODO: verstehe nicht, warum die Bewegung nicht von Touch gestartet werden kann. Wahrscheinlich
+        //       weil es stark davon abhaengt, dass die Positiondaten stetig kongruent sind, und touch hat "Spruenge"
+        //       also muss ich eine neue Art von Bewegung implementieren?
+
+        //click macht ja "an/aus" fuer trackball, aber touch nicht, touch macht beep, beep, beepbeepbeep, beep...
+        if(!m_shiftDown) m_trackball->push(pixelPosToViewPos(localPos), QQuaternion());
+        m_lastMousePosition = localPos.toPoint();
+        m_MatrixArtefact.translate(m_model->m_centerPoint);
+        m_MatrixArtefact.translate(m_camOrigin);
+        m_MatrixArtefact.rotate(m_trackball->move(pixelPosToViewPos(localPos), m_MatrixArtefact));
+        m_MatrixArtefact.translate(-m_camOrigin);
+        m_MatrixArtefact.translate(-m_model->m_centerPoint);
+        m_trackball->release(pixelPosToViewPos(localPos), m_MatrixArtefact);
+        updateGL();
+        switch(event->point_event)
+        {
+        case TP_DOWN:
+            cout << "  Finger " << (int)event->id << " touched at (" << event->x << "," << (int)event->y
+                 << ") width:" << event->dx << " height:" << event->dy << endl;
+            break;
+        case TP_MOVE:
+            cout<<" moved "<< (int)event->id<<" ";
+            if(!m_shiftDown) m_trackball->push(pixelPosToViewPos(localPos), QQuaternion());
+            m_lastMousePosition = localPos.toPoint();
+            m_MatrixArtefact.translate(m_model->m_centerPoint);
+            m_MatrixArtefact.translate(m_camOrigin);
+            m_MatrixArtefact.rotate(m_trackball->move(pixelPosToViewPos(localPos), m_MatrixArtefact));
+            m_MatrixArtefact.translate(-m_camOrigin);
+            m_MatrixArtefact.translate(-m_model->m_centerPoint);
+            break;
+
+        case TP_UP:
+            cout << "  Finger " << (int)event->id << " left at (" << event->x << "," << event->y
+                 << ") width:" << event->dx << " height:" << event->dy << endl;
+            break;
+        }
+    };
 }
 
 ////spits out all event types
@@ -1002,11 +1058,6 @@ void AVGLWidget::catchEvent(AVTouchEvent* event)
 */
 void AVGLWidget::mousePressEvent(QMouseEvent *event)
 {
-
-    //    uncomment to check if we accept Touch Events by mouse press
-//        boolean DoWe=this->testAttribute(Qt::WA_AcceptTouchEvents);
-//        if(DoWe){std::cout << "we do!" << std::endl;}
-
     if (event->buttons() & Qt::LeftButton)
     {
         if(!m_shiftDown) m_trackball->push(pixelPosToViewPos(event->localPos()), QQuaternion());
@@ -1107,7 +1158,7 @@ void AVGLWidget::mouseReleaseEvent(QMouseEvent *event)
 /*! wheelMoveEvent is called on every frame and looks for movement of the mouse to handle different actions
 *  - while a point is dragged with left button, its representation is drawn on the artefact
 *  - while right mouse button is pressed, mouse movement adjusts the camera rotation
-*  - right button and shift key results in lateral mouse movement
+*  - right button and shift key results in lateral camera movement
 */
 void AVGLWidget::mouseMoveEvent(QMouseEvent *event)
 {

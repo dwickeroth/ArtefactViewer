@@ -43,33 +43,25 @@ public:
     int Init();
     void setGLWidget(AVGLWidget* glWidget);
     AVTouchEvent e;
-//SignalSlotApproach
 signals:
     void throwEvent(AVTouchEvent *event);
-
 private:
-
     explicit AVPQReader(QObject* parent = 0);
-
     // we leave just the declarations, so the compiler will warn us
     // if we try to use those two functions by accident
     AVPQReader(const AVPQReader &); //hide copy constructor
     AVPQReader& operator=(const AVPQReader &); //hide assign op
-
     ~AVPQReader();
-
     AVGLWidget*         m_glWidget;
-//    QPoint punto;
-    QPointF punto,pos;
-
     static AVPQReader* m_instance;
-//////////////////////call back functions///////////////////////
+
+    //////////////////////call back functions///////////////////////
     // OnReceivePointFrame: function to handle when recieve touch point frame
     //	the unmoving touch point won't be sent from server. The new touch point with its pointevent is TP_DOWN
     //	and the leaving touch point with its pointevent will be always sent from server;
     static void OnReceivePointFrame(int frame_id,int time_stamp,int moving_point_count,const TouchPoint * moving_point_array, void * call_back_object);
 
-    // OnReceivePointFrame: function to handle when recieve touch gesture
+    // OnReceiveGesture: function to handle when recieve a gesture
     static void OnReceiveGesture(const TouchGesture & ges, void * call_back_object);
 
     // OnServerBreak: function to handle when server break(disconnect or network error)
@@ -95,14 +87,11 @@ private:
     // OnTouchPoint: function to handle TouchPoint
     void OnTouchPoint(const TouchPoint & tp);
 
-    QTouchEvent* tap;
-
-
     // OnTouchGesture: function to handle TouchGesture
 //    void OnTouchGesture(const TouchGesture & tg);
     //
 
-    //here use function pointer table to handle the different gesture type;
+    //here use function pointer table to handle the different gesture types;
     typedef void (*PFuncOnTouchGesture)(const TouchGesture & tg,void * call_object);
 
     static void DefaultOnTG(const TouchGesture & tg,void * call_object); // just show the gesture
