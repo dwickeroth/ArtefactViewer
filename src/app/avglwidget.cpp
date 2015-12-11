@@ -32,8 +32,9 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 #include "avmainwindow.h"
 #include "avtrackball.h"
 #include "avpqreader.h"
-#include "avtouchevent.h"
+#include "avtouchpoint.h"
 #include "iostream"
+using namespace std;
 
 AVGLWidget::AVGLWidget(QWidget *parent) : QGLWidget(QGLFormat(QGL::SampleBuffers), parent)
 {
@@ -44,16 +45,11 @@ AVGLWidget::AVGLWidget(QWidget *parent) : QGLWidget(QGLFormat(QGL::SampleBuffers
     stereoFormat.setSampleBuffers(true);
     stereoFormat.setStereo(true);
     this->setFormat(stereoFormat);
-    //    accept touch events from Windows native
-    //    this->setAttribute(Qt::WA_AcceptTouchEvents,true);
-    //    Hide the cursor
     this->setCursor(Qt::BlankCursor);
     initialize();
     setAutoFillBackground(false);
     setAutoBufferSwap(false);
-
     m_trackball = new AVTrackBall(AVTrackBall::Sphere);
-
 }
 
 AVGLWidget::~AVGLWidget()
@@ -70,6 +66,7 @@ AVGLWidget::~AVGLWidget()
 
 void AVGLWidget::initialize()
 {
+    QThread::currentThread()->setPriority(QThread::HighestPriority);
     m_MatrixLights.setToIdentity();
     m_vMatrix.setToIdentity();
     m_LeftVMatrix.setToIdentity();
@@ -138,11 +135,6 @@ QImage AVGLWidget::renderToOffscreenBuffer(int width, int height)
     //UNSURE if I need to redraw in offscreen buffer
     fbo.bind();
     // Select back left buffer
-    //UNSURE
-    //    QGLFormat formato=this->format();
-    //UNSURE: uncomment if offscreen buffer is not shown in stereo
-    //    if(formato.stereo()){std::cout << "it's on for offscreen left!" << std::endl;}
-    //    else{std::cout << "it's OFF for offscreen left!" << std::endl;}
 
     glDrawBuffer(GL_BACK_LEFT);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -196,8 +188,6 @@ QImage AVGLWidget::renderToOffscreenBuffer(int width, int height)
     updateGL();
 
     return fbo.toImage();
-
-
 }
 
 QVector3D AVGLWidget::getBackgroundColor2() const
@@ -289,17 +279,6 @@ void AVGLWidget::setShiftDown(bool shiftDown)
 {
     m_shiftDown = shiftDown;
 }
-
-//AVTrackBall AVGLWidget::getTrackBall() const
-//{
-//    return m_trackball;
-//}
-//void AVGLWidget::setTrackBall(AVTrackBall trackBall)
-//{
-//    m_trackball = trackBall;
-//}
-
-
 
 int AVGLWidget::getEnhancementParam(int i, int j) const
 {
@@ -490,8 +469,7 @@ void AVGLWidget::paintGL()
     //    uncomment to check if we accept Touch Events by painting
     //    boolean DoWe=this->testAttribute(Qt::WA_AcceptTouchEvents);
     //    if(DoWe){std::cout << "we do!" << std::endl;}
-    //    QGLFormat formato=this->format();
-    //    if(formato.stereo()){std::cout << "it's on!" << std::endl;}
+
     // Select back left buffer
     glDrawBuffer(GL_BACK_LEFT);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -980,71 +958,63 @@ void AVGLWidget::drawOverlays(QPaintDevice *device, bool offscreen, int fboWidth
 /////////////////////////////////////////////////////////////////
 
 
-void AVGLWidget::catchEvent(AVTouchEvent* event)
+void AVGLWidget::catchEvent(AVTouchPoint tPoint)
 {
-    unsigned short top=(unsigned short)32;
-    unsigned short bottom=(unsigned short)0;
+//    std::cout << "AV id: " << (unsigned short) tPoint.id
+//              << " type: " << (unsigned short) tPoint.point_event
+//              << " x: " << (int) tPoint.x
+//              << " y: " << (int) tPoint.y
+//              << " dx: " << (unsigned short) tPoint.dx
+//              << " dy: " << (unsigned short) tPoint.dy << std::endl;
+
+    QPointF screenPos;
     QPointF localPos;
-    localPos.setX((qreal) event->x);
-    localPos.setY((qreal) event->y);
-    //    cout<<(float)localPos.x()<<endl;
-    //    if((int)event->id<=top && (int)event->id>=bottom && (event->dx>1 || event->dy>1)){
-    if((float)localPos.x()>0 && (float)localPos.x()<1920){
-        cout<<"accepted event of type "<<(int)event->point_event<<" at: ("<<(float)localPos.x()<<" , "<<(float)localPos.y()<<")"<<endl;
+    screenPos.setX((qreal) tPoint.x);
+    screenPos.setY((qreal) tPoint.y);
+    localPos=this->mapFromGlobal(screenPos.toPoint());
 
-
-
-
-
-
-
-
-
-
-
-        // TODO: verstehe nicht, warum die Bewegung nicht von Touch gestartet werden kann. Wahrscheinlich
-        //       weil es stark davon abhaengt, dass die Positiondaten stetig kongruent sind, und touch hat "Spruenge"
-        //       also muss ich eine neue Art von Bewegung implementieren?
-
-        //click macht ja "an/aus" fuer trackball, aber touch nicht, touch macht beep, beep, beepbeepbeep, beep...
-        if(!m_shiftDown) m_trackball->push(pixelPosToViewPos(localPos), QQuaternion());
-        m_lastMousePosition = localPos.toPoint();
-        m_MatrixArtefact.translate(m_model->m_centerPoint);
-        m_MatrixArtefact.translate(m_camOrigin);
-        m_MatrixArtefact.rotate(m_trackball->move(pixelPosToViewPos(localPos), m_MatrixArtefact));
-        m_MatrixArtefact.translate(-m_camOrigin);
-        m_MatrixArtefact.translate(-m_model->m_centerPoint);
-        m_trackball->release(pixelPosToViewPos(localPos), m_MatrixArtefact);
-        updateGL();
-        switch(event->point_event)
+    QQuaternion rotation;
+    if(localPos.x()>0&&localPos.x()<width() &&localPos.y()>0&&localPos.y()<height()){
+        switch(tPoint.point_event)
         {
-        case TP_DOWN:
-            cout << "  Finger " << (int)event->id << " touched at (" << event->x << "," << (int)event->y
-                 << ") width:" << event->dx << " height:" << event->dy << endl;
+            case TP_DOWN:
+                cout << "  Finger " << (int)tPoint.id << " touched at (" << localPos.x() << "," << (int)localPos.y()
+                     << ") width:" << tPoint.dx << " height:" << tPoint.dy << endl;
+                m_trackball->push(pixelPosToViewPos(localPos), QQuaternion());
+//                m_lastTouchPosition.insert((int)tPoint.id,localPos);
             break;
-        case TP_MOVE:
-            cout<<" moved "<< (int)event->id<<" ";
-            if(!m_shiftDown) m_trackball->push(pixelPosToViewPos(localPos), QQuaternion());
-            m_lastMousePosition = localPos.toPoint();
-            m_MatrixArtefact.translate(m_model->m_centerPoint);
-            m_MatrixArtefact.translate(m_camOrigin);
-            m_MatrixArtefact.rotate(m_trackball->move(pixelPosToViewPos(localPos), m_MatrixArtefact));
-            m_MatrixArtefact.translate(-m_camOrigin);
-            m_MatrixArtefact.translate(-m_model->m_centerPoint);
-            break;
-
-        case TP_UP:
-            cout << "  Finger " << (int)event->id << " left at (" << event->x << "," << event->y
-                 << ") width:" << event->dx << " height:" << event->dy << endl;
-            break;
+            case TP_MOVE:
+//            if(m_lastTouchPosition.size()>0)
+//            if(!m_lastTouchPosition.at((int)tPoint.id).isNull())
+//                if(m_lastTouchPosition.at((int)tPoint.id).x()!=localPos.x()&&m_lastTouchPosition.at(tPoint.id).y()!=localPos.y()){
+//                        m_lastTouchPosition.replace((int)tPoint.id,localPos);
+                cout<<"  Finger " << (int)tPoint.id <<" is moving at: (" <<localPos.x ()<< "," << localPos.y() << ")" << endl;
+//                cout<<"  Last   " << (int)tPoint.id <<" is moving at: (" <<m_lastTouchPosition.at(tPoint.id).x()<< "," << m_lastTouchPosition.at(tPoint.id).y() << ")" << endl;
+                rotation = m_trackball->move(pixelPosToViewPos(localPos), m_MatrixArtefact);
+                m_MatrixArtefact.translate(m_model->m_centerPoint);
+                m_MatrixArtefact.translate(m_camOrigin);
+                m_MatrixArtefact.rotate(rotation);
+                m_MatrixArtefact.translate(-m_camOrigin);
+                m_MatrixArtefact.translate(-m_model->m_centerPoint);
+//                }
+                break;
+            case TP_UP:
+                cout << "  Finger " << (int)tPoint.id << " left at (" << localPos.x() << "," << localPos.y()
+                     << ") width:" << tPoint.dx << " height:" << tPoint.dy << endl;
+                m_trackball->release(pixelPosToViewPos(localPos), m_MatrixArtefact);
+//                if(!m_lastTouchPosition.at((int)tPoint.id).isNull())
+//                m_lastTouchPosition.remove((int)tPoint.id);
+                break;
         }
-    };
+
+        updateGL();
+}
 }
 
 ////spits out all event types
 //bool AVGLWidget::event(QEvent *event)
 //{
-//    std::cout<<"Qevent of type "<<(int)event->type()<<endl;
+//    std::cout<<"Qevent of type "<<(int)event.type()<<endl;
 //    return QWidget::event(event);
 //}
 

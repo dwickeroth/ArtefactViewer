@@ -30,7 +30,7 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 
 #include "avlight.h"
 #include "avtrackball.h"
-#include "avtouchevent.h"
+#include "avtouchpoint.h"
 
 class AVModel;
 class AVTrackBall;
@@ -45,8 +45,6 @@ public:
     ~AVGLWidget();
     AVTrackBall*  m_trackball;
     AVModel*    m_model;
-
-
     void    initialize();
 
     QVector<AVLight> m_lights;
@@ -74,9 +72,6 @@ public:
 
     bool isShiftDown() const;
     void setShiftDown(bool shiftDown);
-
-//    AVTrackBall getTrackBall() const;
-//    void setTrackBall(AVTrackBall trackBall);
 
     bool getLightsAreVisible() const;
     void setLightsAreVisible(bool lightsAreVisible);
@@ -112,7 +107,7 @@ public:
 
 
 public slots:
-    void catchEvent(AVTouchEvent *event);
+    void catchEvent(AVTouchPoint event);
 
 private:
     void setZoomLevel(double level, bool relative);
@@ -151,8 +146,6 @@ private:
 
 private:
     //private members with getters/setters
-//    AVTrackBall*  m_trackball;
-
     int         m_selectedPoint;
     int         m_draggedPoint;
     int         m_currentAnnotation;
@@ -168,6 +161,7 @@ private:
     double      m_camDistanceToOrigin;
 
     QPoint      m_lastMousePosition;
+    QVector<QPointF>      m_lastTouchPosition;
     QVector3D   m_camOrigin;
     QVector3D   m_camPosition;
     QVector3D   m_LeftCamPosition;

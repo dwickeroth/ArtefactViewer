@@ -2,13 +2,10 @@
 #define AVPQREADER_H
 #include "PQMTClient.h"
 #include <QMutex>
-
-#include <QTouchEvent>
-
 #include <QPoint>
 #include <QPointF>
 #include "avglwidget.h"
-#include "avtouchevent.h"
+#include "avtouchpoint.h"
 
 
 using namespace PQ_SDK_MultiTouch;
@@ -41,10 +38,10 @@ public:
     }
 
     int Init();
-    void setGLWidget(AVGLWidget* glWidget);
-    AVTouchEvent e;
+//    void setGLWidget(AVGLWidget* glWidget);
+    AVTouchPoint e;
 signals:
-    void throwEvent(AVTouchEvent *event);
+    void throwEvent(AVTouchPoint event);
 private:
     explicit AVPQReader(QObject* parent = 0);
     // we leave just the declarations, so the compiler will warn us
@@ -61,7 +58,7 @@ private:
     //	and the leaving touch point with its pointevent will be always sent from server;
     static void OnReceivePointFrame(int frame_id,int time_stamp,int moving_point_count,const TouchPoint * moving_point_array, void * call_back_object);
 
-    // OnReceiveGesture: function to handle when recieve a gesture
+//    // OnReceiveGesture: function to handle when recieve a gesture
     static void OnReceiveGesture(const TouchGesture & ges, void * call_back_object);
 
     // OnServerBreak: function to handle when server break(disconnect or network error)
@@ -94,27 +91,25 @@ private:
     //here use function pointer table to handle the different gesture types;
     typedef void (*PFuncOnTouchGesture)(const TouchGesture & tg,void * call_object);
 
-    static void DefaultOnTG(const TouchGesture & tg,void * call_object); // just show the gesture
+    //    static void DefaultOnTG(const TouchGesture & tg,void * call_object); // just show the gesture
 
-    static void OnTG_TouchStart(const TouchGesture & tg,void * call_object);
-    static void OnTG_Down(const TouchGesture & tg,void * call_object);
-    static void OnTG_Move(const TouchGesture & tg,void * call_object);
-    static void OnTG_Up(const TouchGesture & tg,void * call_object);
+    //    static void OnTG_TouchStart(const TouchGesture & tg,void * call_object);
+    //    static void OnTG_Down(const TouchGesture & tg,void * call_object);
+    //    static void OnTG_Move(const TouchGesture & tg,void * call_object);
+    //    static void OnTG_Up(const TouchGesture & tg,void * call_object);
 
-    //
-    static void OnTG_SecondDown(const TouchGesture & tg,void * call_object);
-    static void OnTG_SecondUp(const TouchGesture & tg,void * call_object);
+//    //
+//    static void OnTG_SecondDown(const TouchGesture & tg,void * call_object);
+//    static void OnTG_SecondUp(const TouchGesture & tg,void * call_object);
 
-    //
-    static void OnTG_SplitStart(const TouchGesture & tg,void * call_object);
-    static void OnTG_SplitApart(const TouchGesture & tg,void * call_object);
-    static void OnTG_SplitClose(const TouchGesture & tg,void * call_object);
-    static void OnTG_SplitEnd(const TouchGesture & tg,void * call_object);
+//    //
+//    static void OnTG_SplitStart(const TouchGesture & tg,void * call_object);
+//    static void OnTG_SplitApart(const TouchGesture & tg,void * call_object);
+//    static void OnTG_SplitClose(const TouchGesture & tg,void * call_object);
+//    static void OnTG_SplitEnd(const TouchGesture & tg,void * call_object);
 
-    QPointF AVPQReader::pixelPosToViewPos(QPointF *p);
-
-    // OnTG_TouchEnd: to clear what need to clear;
-    static void OnTG_TouchEnd(const TouchGesture & tg,void * call_object);
+// OnTG_TouchEnd: to clear what need to clear;
+//    static void OnTG_TouchEnd(const TouchGesture & tg,void * call_object);
 
 private:
     PFuncOnTouchGesture m_pf_on_tges[TG_TOUCH_END + 1];
