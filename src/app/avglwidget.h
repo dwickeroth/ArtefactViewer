@@ -108,7 +108,6 @@ public:
 
 
 public slots:
-    //Test for speed
     void catchPF(AVPointFrame pFrame);
 
 

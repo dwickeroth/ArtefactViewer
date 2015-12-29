@@ -5,8 +5,6 @@
 #include <QPoint>
 #include <QPointF>
 #include "avglwidget.h"
-#include "avtouchpoint.h"
-// Test for speed
 #include "avpointframe.h"
 
 using namespace PQ_SDK_MultiTouch;

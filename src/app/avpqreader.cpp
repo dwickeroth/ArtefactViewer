@@ -1,10 +1,7 @@
 #include "avpqreader.h"
 #include "avglwidget.h"
 #include "PQMTClient.h"
-#include "avtouchpoint.h"
-// Test for speed
 #include "avpointframe.h"
-
 #include <iostream>
 #include <set>
 #include <map>
@@ -13,6 +10,8 @@
 using namespace PQ_SDK_MultiTouch;
 using namespace std;
 
+int moveThreshold;
+const int moveResolution=15;
 int counter =0;
 AVPQReader* AVPQReader::m_instance = 0;
 
@@ -54,7 +53,7 @@ int AVPQReader::Init()
     }
     ////////////you can set the move_threshold when the tcq.type is RQST_RAWDATA_INSIDE;
     ////send threshold
-    int move_threshold = 10;// 0 pixel, receive all the touch points that are touching in the windows area of this client;
+    int move_threshold = moveThreshold;// 0 pixel, receive all the touch points that are touching in the windows area of this client;
     if((err_code = SendThreshold(move_threshold)) != PQMTE_SUCCESS){
         cout << " send threadhold fail, error code:" << err_code << endl;
         return err_code;
@@ -79,28 +78,6 @@ int AVPQReader::Init()
     return err_code;
 }
 
-//void AVPQReader:: InitFuncOnTG()
-//{
-//    // initialize the call back functions of touch gestures;
-//    cout<<"pointer functions initialized"<<endl;
-//    m_pf_on_tges[TG_TOUCH_START] = &AVPQReader::OnTG_TouchStart;
-//    m_pf_on_tges[TG_DOWN] = &AVPQReader::OnTG_Down;
-//    m_pf_on_tges[TG_MOVE] = &AVPQReader::OnTG_Move;
-//    m_pf_on_tges[TG_UP] = &AVPQReader::OnTG_Up;
-
-//    m_pf_on_tges[TG_SECOND_DOWN] = &AVPQReader::OnTG_SecondDown;
-//    m_pf_on_tges[TG_SECOND_UP] = &AVPQReader::OnTG_SecondUp;
-
-//    m_pf_on_tges[TG_SPLIT_START] = &AVPQReader::OnTG_SplitStart;
-//    m_pf_on_tges[TG_SPLIT_APART] = &AVPQReader::OnTG_SplitApart;
-//    m_pf_on_tges[TG_SPLIT_CLOSE] = &AVPQReader::OnTG_SplitClose;
-//    m_pf_on_tges[TG_SPLIT_END] = &AVPQReader::OnTG_SplitEnd;
-
-//    m_pf_on_tges[TG_TOUCH_END] = &AVPQReader::OnTG_TouchEnd;
-
-//    cout<<"pointer functions initialized"<<endl;
-
-//}
 void AVPQReader::SetFuncsOnReceiveProc()
 {
     cout<<"function settings are being called"<<endl;
@@ -117,22 +94,26 @@ void AVPQReader:: OnReceivePointFrame(int frame_id, int time_stamp, int moving_p
     AVPQReader * sample = static_cast<AVPQReader*>(call_back_object);
     assert(sample != NULL);
     AVPointFrame pf;
-    //Test for speed
     pf.pf_frame_id=frame_id;
     pf.pf_time_stamp=time_stamp;
     pf.pf_moving_point_count=moving_point_count;
     pf.pf_moving_point_array=moving_point_array;
-    if(counter%10==0||pf.pf_moving_point_array[0].point_event==TP_DOWN||pf.pf_moving_point_array[0].point_event==TP_UP){
-    sample->OnTouchPoint(pf);
-    for(int i = 0; i < moving_point_count; ++ i){
-        std::cout<<"throw"<<(int) moving_point_array[i].point_event<<std::endl;
-//        cout << " frame_id:" << pf.pf_frame_id << " time:"  << pf.pf_time_stamp << " ms" << " moving point count:" << pf.pf_moving_point_count << endl;
-    }
-    //    for(int i = 0; i < moving_point_count; ++ i){
-    //        TouchPoint tp = moving_point_array[i];
-    //        sample->OnTouchPoint(tp);
-    //    }
-    //throw exception("test exception here");
+    if(counter%moveResolution==0||pf.pf_moving_point_array[0].point_event==TP_DOWN||pf.pf_moving_point_array[0].point_event==TP_UP){
+        sample->OnTouchPoint(pf);
+        for(int i = 0; i < moving_point_count; ++ i){
+            switch(moving_point_array[i].point_event){
+            case TP_DOWN:
+                std::cout<< "type "<<(int) moving_point_array[i].point_event<<" Touch"<<std::endl;
+                break;
+            case TP_MOVE:
+                std::cout<< "type "<<(int) moving_point_array[i].point_event<<" Move"<<std::endl;
+                break;
+            case TP_UP:
+                std::cout<< "type "<<(int) moving_point_array[i].point_event<<" End Touch"<<std::endl;
+                break;
+            }
+            //        std::cout<<(int) moving_point_array[i].point_event<<std::endl;
+        }
     }
     counter++;
 }
@@ -142,7 +123,6 @@ void AVPQReader:: OnReceiveGesture(const TouchGesture & ges, void * call_back_ob
     cout<<"gesture received"<<endl;
     AVPQReader * sample = static_cast<AVPQReader*>(call_back_object);
     assert(sample != NULL);
-    //    sample->OnTouchGesture(ges);
     //throw exception("test exception here");
 }
 
@@ -185,128 +165,9 @@ void AVPQReader:: OnTouchPoint(const AVPointFrame & pf
                                )
 {
     AVPointFrame pFrame;
-    //Test for speed
     pFrame.pf_frame_id=pf.pf_frame_id;
     pFrame.pf_time_stamp=pf.pf_time_stamp;
     pFrame.pf_moving_point_count=pf.pf_moving_point_count;
     pFrame.pf_moving_point_array=pf.pf_moving_point_array;
     emit throwPF(pFrame);
-
-    //Test for speed
-
-    //    // Transfer information from touch point to QEvent
-        AVTouchPoint e;
-    //    e.point_event=tp.point_event;
-    //    e.id=tp.id;
-    //    e.x=tp.x;
-    //    e.y=tp.y;
-    //    e.dx=tp.dx;
-    //    e.dy=tp.dy;
-    //    // SignalSlotApproach
-    //    emit throwEvent(e);
-    //    cout<<"event sent"<<endl;
 }
-
-//void AVPQReader:: OnTouchGesture(const TouchGesture & tg)
-//{
-
-//    if(TG_NO_ACTION == tg.type)
-//        return ;
-//    assert(tg.type <= TG_TOUCH_END);
-//    DefaultOnTG(tg,this);
-//    PFuncOnTouchGesture pf = m_pf_on_tges[tg.type];
-//    if(NULL != pf){
-//        pf(tg,this);
-//    }
-//}
-
-//void AVPQReader:: OnTG_TouchStart(const TouchGesture & tg,void * call_object)
-//{
-//    assert(tg.type == TG_TOUCH_START);
-//    //    cout << "  here, the touch starts, initialize something." << endl;
-//}
-//void AVPQReader:: DefaultOnTG(const TouchGesture & tg,void * call_object) // just show the gesture
-//{
-//    //    cout <<"ges,name:"<< GetGestureName(tg) << " type:" << tg.type << ",param size:" << tg.param_size << " ";
-//    //    for(int i = 0; i < tg.param_size; ++ i)
-//    //        cout << tg.params[i] << " ";
-//    //    cout << endl;
-//}
-//void AVPQReader:: OnTG_Down(const TouchGesture & tg,void * call_object)
-//{
-//    assert(tg.type == TG_DOWN && tg.param_size >= 2);
-//    //    cout << "A single finger touching at :( "
-//    //         << tg.params[0] << "," << tg.params[1] << " )" << endl;
-//}
-//void AVPQReader:: OnTG_Move(const TouchGesture & tg,void * call_object)
-//{
-//    assert(tg.type == TG_MOVE && tg.param_size >= 2);
-//    //    cout << "  the single finger moving on the screen at :( "
-//    //         << tg.params[0] << "," << tg.params[1] << " )" << endl;
-//}
-//void AVPQReader:: OnTG_Up(const TouchGesture & tg,void * call_object)
-//{
-//    assert(tg.type == TG_UP && tg.param_size >= 2);
-//    //    cout << " the single finger is leaving the screen at :( "
-//    //         << tg.params[0] << "," << tg.params[1] << " )" << endl;
-//}
-////
-//void AVPQReader:: OnTG_SecondDown(const TouchGesture & tg,void * call_object)
-//{
-//    assert(tg.type == TG_SECOND_DOWN && tg.param_size >= 4);
-//    //    cout << "  the second finger touching at :( "
-//    //         << tg.params[0] << "," << tg.params[1] << " ),"
-//    //         << " after the first finger touched at :( "
-//    //         << tg.params[2] << "," << tg.params[3] << " )" << endl;
-//}
-//void AVPQReader:: OnTG_SecondUp(const TouchGesture & tg,void * call_object)
-//{
-//    assert(tg.type == TG_SECOND_UP && tg.param_size >= 4);
-//    //    cout << "  the second finger is leaving at :( "
-//    //         << tg.params[0] << "," << tg.params[1] << " ),"
-//    //         << " while the first finger still anchored around :( "
-//    //         << tg.params[2] << "," << tg.params[3] << " )" << endl;
-//}
-////
-//void AVPQReader:: OnTG_SplitStart(const TouchGesture & tg,void * call_object)
-//{
-//    assert(tg.type == TG_SPLIT_START && tg.param_size >= 4);
-//    //    cout << "  the two fingers are splitting with one finger at: ( "
-//    //         << tg.params[0] << "," << tg.params[1] << " ),"
-//    //         << " , the other one at :( "
-//    //         << tg.params[2] << "," << tg.params[3] << " )" << endl;
-//}
-
-//void AVPQReader:: OnTG_SplitApart(const TouchGesture & tg,void * call_object)
-//{
-//    assert(tg.type == TG_SPLIT_APART && tg.param_size >= 1);
-//    //    cout << "  the two fingers are splitting apart with their distance increased by "
-//    //         << tg.params[0]
-//    //         << " with a ratio of:" << tg.params[1]
-//    //         << endl;
-//}
-//void AVPQReader:: OnTG_SplitClose(const TouchGesture & tg,void * call_object)
-//{
-//    assert(tg.type == TG_SPLIT_CLOSE && tg.param_size >= 1);
-//    //    cout << "  the two fingers are splitting close with their distance decreasing by "
-//    //         << tg.params[0]
-//    //         << " with a ratio of:" << tg.params[1]
-//    //         << endl;
-//}
-//void AVPQReader:: OnTG_SplitEnd(const TouchGesture & tg,void * call_object)
-//{
-//    assert(tg.type == TG_SPLIT_END);
-//    //    cout << "  the two splitting fingers, with one finger at: ( "
-//    //         << tg.params[0] << "," << tg.params[1] << " ),"
-//    //         << " , the other at :( "
-//    //         << tg.params[2] << "," << tg.params[3] << " )"
-//    //         << " will end" << endl;
-//}
-
-//// OnTG_TouchEnd: to clear what need to clear
-//void AVPQReader:: OnTG_TouchEnd(const TouchGesture & tg,void * call_object)
-//{
-//    assert(tg.type == TG_TOUCH_END);
-//    cout << "  all the fingers are leaving and there are no fingers on the screen." << endl;
-//}
-///////////////////////////// functions ///////////////////////////////////
