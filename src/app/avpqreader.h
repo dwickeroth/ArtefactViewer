@@ -6,7 +6,8 @@
 #include <QPointF>
 #include "avglwidget.h"
 #include "avtouchpoint.h"
-
+// Test for speed
+#include "avpointframe.h"
 
 using namespace PQ_SDK_MultiTouch;
 
@@ -35,13 +36,16 @@ public:
         delete m_instance;
         m_instance = 0;
         mutex.unlock();
+        DisconnectServer();
     }
 
     int Init();
 //    void setGLWidget(AVGLWidget* glWidget);
     AVTouchPoint e;
+    AVPointFrame pf;
 signals:
-    void throwEvent(AVTouchPoint event);
+//    void throwEvent(AVTouchPoint event);
+    void throwPF(AVPointFrame pFrame);
 private:
     explicit AVPQReader(QObject* parent = 0);
     // we leave just the declarations, so the compiler will warn us
@@ -82,7 +86,7 @@ private:
     void SetFuncsOnReceiveProc();
 
     // OnTouchPoint: function to handle TouchPoint
-    void OnTouchPoint(const TouchPoint & tp);
+    void OnTouchPoint(const AVPointFrame & pf);
 
     // OnTouchGesture: function to handle TouchGesture
 //    void OnTouchGesture(const TouchGesture & tg);

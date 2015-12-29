@@ -10,6 +10,8 @@
 #include <QDomDocument>
 #include <QCoreApplication>
 #include "avtouchpoint.h"
+// Test for speed
+#include "avpointframe.h"
 
 #include <iostream>
 
@@ -42,9 +44,14 @@ AVController::AVController()
     m_currentlyOpenFile = QString("");
     m_xmlFileAlreadyExists = false;
 //SignalSlotApproach
-    qRegisterMetaType<AVTouchPoint>("AVTouchPoint");
-    QObject::connect(m_pqReader,SIGNAL(throwEvent(AVTouchPoint)),
-                     m_glWidget,SLOT(catchEvent(AVTouchPoint)));
+//    qRegisterMetaType<AVTouchPoint>("AVTouchPoint");
+//    QObject::connect(m_pqReader,SIGNAL(throwEvent(AVTouchPoint)),
+//                     m_glWidget,SLOT(catchEvent(AVTouchPoint)));
+    //Test for speed
+    qRegisterMetaType<AVPointFrame>("AVPointFrame");
+    QObject::connect(m_pqReader,SIGNAL(throwPF(AVPointFrame)),
+                     m_glWidget,SLOT(catchPF(AVPointFrame)));
+
     std::cout<<"connected SigSlot"<<std::endl;
 
 }

@@ -2,15 +2,18 @@
 #include "avglwidget.h"
 #include "PQMTClient.h"
 #include "avtouchpoint.h"
+// Test for speed
+#include "avpointframe.h"
 
 #include <iostream>
 #include <set>
 #include <map>
 #include <cassert>
 #include <functional>
-//using namespace PQ_SDK_MultiTouch;
+using namespace PQ_SDK_MultiTouch;
 using namespace std;
 
+int counter =0;
 AVPQReader* AVPQReader::m_instance = 0;
 
 AVPQReader::AVPQReader(QObject *parent)
@@ -21,7 +24,7 @@ AVPQReader::AVPQReader(QObject *parent)
 
 AVPQReader::~AVPQReader()
 {
-    PQ_SDK_MultiTouch::DisconnectServer();
+    DisconnectServer();
     cout<<"AVPQReader off"<<endl;
 }
 
@@ -32,7 +35,7 @@ int AVPQReader::Init()
     QThread::currentThread()->setPriority(QThread::LowestPriority);
     int err_code = PQMTE_SUCCESS;
     // initialize the handle functions of gestures;
-//    InitFuncOnTG();
+    //    InitFuncOnTG();
     // set the functions on server callback
     SetFuncsOnReceiveProc();
     // connect server
@@ -110,15 +113,28 @@ void AVPQReader::SetFuncsOnReceiveProc()
 
 void AVPQReader:: OnReceivePointFrame(int frame_id, int time_stamp, int moving_point_count, const TouchPoint * moving_point_array, void * call_back_object)
 {
-    cout<<"pf received"<<endl;
+
     AVPQReader * sample = static_cast<AVPQReader*>(call_back_object);
     assert(sample != NULL);
-
+    AVPointFrame pf;
+    //Test for speed
+    pf.pf_frame_id=frame_id;
+    pf.pf_time_stamp=time_stamp;
+    pf.pf_moving_point_count=moving_point_count;
+    pf.pf_moving_point_array=moving_point_array;
+    if(counter%10==0||pf.pf_moving_point_array[0].point_event==TP_DOWN||pf.pf_moving_point_array[0].point_event==TP_UP){
+    sample->OnTouchPoint(pf);
     for(int i = 0; i < moving_point_count; ++ i){
-        TouchPoint tp = moving_point_array[i];
-        sample->OnTouchPoint(tp);
+        std::cout<<"throw"<<(int) moving_point_array[i].point_event<<std::endl;
+//        cout << " frame_id:" << pf.pf_frame_id << " time:"  << pf.pf_time_stamp << " ms" << " moving point count:" << pf.pf_moving_point_count << endl;
     }
+    //    for(int i = 0; i < moving_point_count; ++ i){
+    //        TouchPoint tp = moving_point_array[i];
+    //        sample->OnTouchPoint(tp);
+    //    }
     //throw exception("test exception here");
+    }
+    counter++;
 }
 
 void AVPQReader:: OnReceiveGesture(const TouchGesture & ges, void * call_back_object)
@@ -165,19 +181,30 @@ void AVPQReader::OnGetDeviceInfo(const TouchDeviceInfo & deviceinfo,void *call_b
 }
 // here, just record the position of point,
 //	you can do mouse map like "OnTG_Down" etc;
-void AVPQReader:: OnTouchPoint(const TouchPoint & tp)
+void AVPQReader:: OnTouchPoint(const AVPointFrame & pf
+                               )
 {
-    // Transfer information from touch point to QEvent
-    AVTouchPoint e;
-    e.point_event=tp.point_event;
-    e.id=tp.id;
-    e.x=tp.x;
-    e.y=tp.y;
-    e.dx=tp.dx;
-    e.dy=tp.dy;
-    // SignalSlotApproach
-    emit throwEvent(e);
-    cout<<"event sent"<<endl;
+    AVPointFrame pFrame;
+    //Test for speed
+    pFrame.pf_frame_id=pf.pf_frame_id;
+    pFrame.pf_time_stamp=pf.pf_time_stamp;
+    pFrame.pf_moving_point_count=pf.pf_moving_point_count;
+    pFrame.pf_moving_point_array=pf.pf_moving_point_array;
+    emit throwPF(pFrame);
+
+    //Test for speed
+
+    //    // Transfer information from touch point to QEvent
+        AVTouchPoint e;
+    //    e.point_event=tp.point_event;
+    //    e.id=tp.id;
+    //    e.x=tp.x;
+    //    e.y=tp.y;
+    //    e.dx=tp.dx;
+    //    e.dy=tp.dy;
+    //    // SignalSlotApproach
+    //    emit throwEvent(e);
+    //    cout<<"event sent"<<endl;
 }
 
 //void AVPQReader:: OnTouchGesture(const TouchGesture & tg)

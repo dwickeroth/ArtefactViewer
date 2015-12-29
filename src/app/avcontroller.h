@@ -11,6 +11,7 @@ class AVPluginManager;
 class AVModel;
 class AVGLWidget;
 class AVPQReader;
+class AVPointFrame;
 
 class AVController
 {

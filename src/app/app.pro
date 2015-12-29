@@ -41,7 +41,8 @@ HEADERS  += avmainwindow.h \
     avlight.h \
     PQMTClient.h \
     avpqreader.h \
-    avtouchpoint.h
+    avtouchpoint.h \
+    avpointframe.h
 
 FORMS    += avmainwindow.ui \
     about.ui \

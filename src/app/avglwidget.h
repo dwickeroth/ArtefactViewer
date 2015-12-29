@@ -31,6 +31,7 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 #include "avlight.h"
 #include "avtrackball.h"
 #include "avtouchpoint.h"
+#include "avpointframe.h"
 
 class AVModel;
 class AVTrackBall;
@@ -107,7 +108,9 @@ public:
 
 
 public slots:
-    void catchEvent(AVTouchPoint event);
+    //Test for speed
+    void catchPF(AVPointFrame pFrame);
+
 
 private:
     void setZoomLevel(double level, bool relative);
@@ -135,6 +138,7 @@ protected:
 
 
 private:
+    void catchEvent(AVTouchPoint &tPoint);
 
     void drawBackground();
     void setupCamera(boolean sizeIsLeft);
@@ -161,6 +165,7 @@ private:
     double      m_camDistanceToOrigin;
 
     QPoint      m_lastMousePosition;
+    QPoint      m_initialFingerPosition;
     QVector<QPointF>      m_lastTouchPosition;
     QVector3D   m_camOrigin;
     QVector3D   m_camPosition;

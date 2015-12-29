@@ -33,6 +33,8 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 #include "avtrackball.h"
 #include "avpqreader.h"
 #include "avtouchpoint.h"
+// Test for speed
+#include "avpointframe.h"
 #include "iostream"
 using namespace std;
 
@@ -953,20 +955,87 @@ void AVGLWidget::drawOverlays(QPaintDevice *device, bool offscreen, int fboWidth
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /////////////////////////////////////////////////////////////////
 ///////////////////////////TOUCH EVENTS//////////////////////////
 /////////////////////////////////////////////////////////////////
 
 
-void AVGLWidget::catchEvent(AVTouchPoint tPoint)
+void AVGLWidget::catchPF(AVPointFrame pFrame)
 {
-//    std::cout << "AV id: " << (unsigned short) tPoint.id
-//              << " type: " << (unsigned short) tPoint.point_event
-//              << " x: " << (int) tPoint.x
-//              << " y: " << (int) tPoint.y
-//              << " dx: " << (unsigned short) tPoint.dx
-//              << " dy: " << (unsigned short) tPoint.dy << std::endl;
 
+    for(int i = 0; i < pFrame.pf_moving_point_count; ++ i){
+            TouchPoint tp = pFrame.pf_moving_point_array[i];
+                AVTouchPoint e;
+                e.point_event=tp.point_event;
+                std::cout<<"tp:"<<(int)tp.point_event<<std::endl;
+                std::cout<<"Catch"<<(int) pFrame.pf_moving_point_array[i].point_event<<std::endl;
+                e.id=tp.id;
+                e.x=tp.x;
+                e.y=tp.y;
+                e.dx=tp.dx;
+                e.dy=tp.dy;
+            catchEvent(e);
+        }
+
+//        m_initialFingerPosition.setX((qreal)pFrame.pf_moving_point_array[0].x);
+//        m_initialFingerPosition.setY((qreal)pFrame.pf_moving_point_array[0].y);
+//        std::cout << "Initial Position is (" << m_initialFingerPosition.x()<<","<<m_initialFingerPosition.y()<<")"<<std::endl;
+
+//    double deltaX = pFrame.pf_moving_point_array[0].x - m_initialFingerPosition.x();
+//    double deltaY = pFrame.pf_moving_point_array[0].y - m_initialFingerPosition.y();
+
+//    if(pFrame.pf_moving_point_count==1&&(deltaX>50||deltaY>50)){
+////        QVector3D camUpDirection(0,1,0), camRightDirection(1,0,0);
+////        m_camOrigin+=camRightDirection * -deltaX/6.3f * m_camDistanceToOrigin/150.0f;
+////        m_camOrigin+=camUpDirection * deltaY/6.3f * m_camDistanceToOrigin/150.0f;
+////        updateGL();
+//        std::cout << "Camera moved by (" << pFrame.pf_moving_point_array[0].x<<" , "<< m_initialFingerPosition.x()<<")"<<std::endl;
+//    }
+}
+
+void AVGLWidget::catchEvent(AVTouchPoint &tPoint)
+{
     QPointF screenPos;
     QPointF localPos;
     screenPos.setX((qreal) tPoint.x);
@@ -975,6 +1044,14 @@ void AVGLWidget::catchEvent(AVTouchPoint tPoint)
 
     QQuaternion rotation;
     if(localPos.x()>0&&localPos.x()<width() &&localPos.y()>0&&localPos.y()<height()){
+        std::cout<<"Switch:"<< (int)tPoint.point_event<<std::endl;
+
+        std::cout << "AV id: " << (unsigned short) tPoint.id
+                  << " type: " << (unsigned short) tPoint.point_event
+                  << " x: " << (int) tPoint.x
+                  << " y: " << (int) tPoint.y
+                  << " dx: " << (unsigned short) tPoint.dx
+                  << " dy: " << (unsigned short) tPoint.dy << std::endl;
         switch(tPoint.point_event)
         {
             case TP_DOWN:
@@ -1006,9 +1083,9 @@ void AVGLWidget::catchEvent(AVTouchPoint tPoint)
 //                m_lastTouchPosition.remove((int)tPoint.id);
                 break;
         }
-
-        updateGL();
 }
+        updateGL();
+
 }
 
 ////spits out all event types
