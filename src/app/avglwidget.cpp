@@ -35,7 +35,8 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 #include "avpointframe.h"
 #include "iostream"
 using namespace std;
-
+int slower=0;
+bool zooming=false;
 AVGLWidget::AVGLWidget(QWidget *parent) : QGLWidget(QGLFormat(QGL::SampleBuffers), parent)
 {
     m_model = AVModel::instance();
@@ -990,52 +991,188 @@ void AVGLWidget::drawOverlays(QPaintDevice *device, bool offscreen, int fboWidth
 
 
 
-
-
-
-
 /////////////////////////////////////////////////////////////////
 ///////////////////////////TOUCH EVENTS//////////////////////////
 /////////////////////////////////////////////////////////////////
 void AVGLWidget::catchPF(AVPointFrame pFrame)
 {
-    if(pFrame.pf_moving_point_count==1)
-        if(!m_shiftDown)
+//    zooming start
+//    if(pFrame.pf_moving_point_count==2&&pFrame.pf_moving_point_array[0].point_event==TP_DOWN&&pFrame.pf_moving_point_array[1].point_event==TP_DOWN)
+//    {
+//        zooming=true;
+//        m_iZS.setX((qreal)(pFrame.pf_moving_point_array[0].x-pFrame.pf_moving_point_array[1].x));
+//        m_iZS.setY((qreal)(pFrame.pf_moving_point_array[0].y-pFrame.pf_moving_point_array[1].y));
+//        std::cout<<"we are zooming"<<std::endl;
+//    }
 
-        {
+//    zooming approach 2
+//    if(zooming&&pFrame.pf_moving_point_array[0].point_event==TP_MOVE||zooming&&pFrame.pf_moving_point_array[1].point_event==TP_MOVE)
+//    {
+//    m_nZS.setX(((int)(pFrame.pf_moving_point_array[0].x-pFrame.pf_moving_point_array[1].x)));
+//    m_nZS.setY(((int)(pFrame.pf_moving_point_array[0].y-pFrame.pf_moving_point_array[1].y)));
+//    if(m_nZS.x()/m_iZS.x()>0)setZoomLevel(m_nZS.x()/m_iZS.x(),true);
+//    if(m_nZS.x()/m_iZS.x()>1)std::cout<<"zoom out"<<m_nZS.x()/m_iZS.x()<<std::endl;
+//    if(m_nZS.x()/m_iZS.x()>1)std::cout<<"NO ZOOM"<<std::endl;
+//    if(m_nZS.x()/m_iZS.x()<1)std::cout<<"zoom in"<<m_nZS.x()/m_iZS.x()<<std::endl;
+//    }
 
+//    zooming approach 1
+//    if(zooming&&m_iZS.x()<(qreal)(pFrame.pf_moving_point_array[0].x-pFrame.pf_moving_point_array[1].x-100)||
+//            (zooming&&m_iZS.y()<(qreal)(pFrame.pf_moving_point_array[0].y-pFrame.pf_moving_point_array[1].y-100)))
+//    {
+//        setZoomLevel(1.000001, true);
+//        m_iZS.setX((qreal)(pFrame.pf_moving_point_array[0].x-pFrame.pf_moving_point_array[1].x));
+//        m_iZS.setY((qreal)(pFrame.pf_moving_point_array[0].y-pFrame.pf_moving_point_array[1].y));
+//        std::cout<<"we are rezooming because difx="<<m_iZS.x()<<std::endl;
+//    }
+//    if(zooming&&m_iZS.x()>(qreal)(pFrame.pf_moving_point_array[0].x-pFrame.pf_moving_point_array[1].x)||
+//            (zooming&&m_iZS.y()>(qreal)(pFrame.pf_moving_point_array[0].y-pFrame.pf_moving_point_array[1].y)))
+//    {
+//        setZoomLevel(0.909090909, true);
+//        m_iZS.setX((qreal)(pFrame.pf_moving_point_array[0].x-pFrame.pf_moving_point_array[1].x));
+//        m_iZS.setY((qreal)(pFrame.pf_moving_point_array[0].y-pFrame.pf_moving_point_array[1].y));
+//        std::cout<<"we are unzooming"<<std::endl;
+//    }
+
+//    zooming end
+//    if(zooming&&(pFrame.pf_moving_point_count!=2||(pFrame.pf_moving_point_array[0].point_event==TP_UP&&pFrame.pf_moving_point_array[1].point_event==TP_UP)))
+//    {
+//        std::cout<<"we are not zooming"<<std::endl;
+//        zooming=false;
+//    }
+
+
+//    if(!zooming){
+
+    if(pFrame.pf_moving_point_count>1)
+        //        if(!m_shiftDown)
+    {
+            //on second finger down, initialize trackball movement in middle point
+            if(pFrame.pf_moving_point_array[0].point_event==TP_DOWN||pFrame.pf_moving_point_array[1].point_event==TP_DOWN){
+                AVTouchPoint e;
+                e.point_event=TP_DOWN;
+                e.x=0;
+                e.y=0;
+                e.dx=0;
+                e.dy=0;
                 for(int i = 0; i < pFrame.pf_moving_point_count; ++ i){
+                    TouchPoint tp = pFrame.pf_moving_point_array[i];
+                    e.id=tp.id;
+                    e.x+=tp.x;
+                    e.y+=tp.y;
+                    e.dx+=tp.dx;
+                    e.dy+=tp.dy;
+                }
+                e.x=(int)e.x/pFrame.pf_moving_point_count;
+                e.y=(int)e.y/pFrame.pf_moving_point_count;
+                e.dx=(unsigned short)e.dx/pFrame.pf_moving_point_count;
+                e.dy=(unsigned short)e.dy/pFrame.pf_moving_point_count;
+                catchEvent(e);
+            }else
+            {
+                if(pFrame.pf_moving_point_array[1].point_event==TP_MOVE){
+                    AVTouchPoint e;
+                    e.point_event=TP_MOVE;
+                    e.x=0;
+                    e.y=0;
+                    e.dx=0;
+                    e.dy=0;
+                    slower++;
+                    for(int i = 0; i < pFrame.pf_moving_point_count; ++ i){
                         TouchPoint tp = pFrame.pf_moving_point_array[i];
-                            AVTouchPoint e;
-                            e.point_event=tp.point_event;
+                        e.id=tp.id;
+                        e.x+=tp.x;
+                        e.y+=tp.y;
+                        e.dx+=tp.dx;
+                        e.dy+=tp.dy;
+                    }
+                    e.x=(int)e.x/pFrame.pf_moving_point_count;
+                    e.y=(int)e.y/pFrame.pf_moving_point_count;
+                    e.dx=(unsigned short)e.dx/pFrame.pf_moving_point_count;
+                    e.dy=(unsigned short)e.dy/pFrame.pf_moving_point_count;
+                    if(slower%pFrame.pf_moving_point_count==0)
+                    catchEvent(e);
+                }
+                else{
+                    if(pFrame.pf_moving_point_array[1].point_event==TP_UP)
+                    {
+                        AVTouchPoint e;
+                        e.point_event=TP_UP;
+                        e.x=0;
+                        e.y=0;
+                        e.dx=0;
+                        e.dy=0;
+                        for(int i = 0; i < pFrame.pf_moving_point_count; ++ i){
+                            TouchPoint tp = pFrame.pf_moving_point_array[i];
                             e.id=tp.id;
-                            e.x=tp.x;
-                            e.y=tp.y;
-                            e.dx=tp.dx;
-                            e.dy=tp.dy;
+                            e.x+=tp.x;
+                            e.y+=tp.y;
+                            e.dx+=tp.dx;
+                            e.dy+=tp.dy;
+                        }
+                        e.x=(int)e.x/pFrame.pf_moving_point_count;
+                        e.y=(int)e.y/pFrame.pf_moving_point_count;
+                        m_initialFingerPosition.setX((qreal)pFrame.pf_moving_point_array[0].x);
+                        m_initialFingerPosition.setY((qreal)pFrame.pf_moving_point_array[0].y);
+                        e.dx=(unsigned short)e.dx/pFrame.pf_moving_point_count;
+                        e.dy=(unsigned short)e.dy/pFrame.pf_moving_point_count;
                         catchEvent(e);
                     }
-
-        }else
-    {    if(pFrame.pf_moving_point_array[0].point_event==TP_DOWN)
-        {
-            m_initialFingerPosition.setX((qreal)pFrame.pf_moving_point_array[0].x);
-            m_initialFingerPosition.setY((qreal)pFrame.pf_moving_point_array[0].y);
-            std::cout << "Initial Position is (" << m_initialFingerPosition.x()<<","<<m_initialFingerPosition.y()<<")"<<std::endl;
+                }
+            }
         }
-        if(pFrame.pf_moving_point_array[0].point_event==TP_MOVE)
+    else
+    {
+        QPointF screenPosCam;
+        QPointF localPosCam;
+        screenPosCam.setX((qreal)pFrame.pf_moving_point_array[0].x);
+        screenPosCam.setY((qreal)pFrame.pf_moving_point_array[0].y);
+        localPosCam=this->mapFromGlobal(screenPosCam.toPoint());
+
+        if(localPosCam.x()>0&&localPosCam.x()<width() &&localPosCam.y()>0&&localPosCam.y()<height())
         {
-            double deltaX = pFrame.pf_moving_point_array[0].x - m_initialFingerPosition.x();
-            double deltaY = pFrame.pf_moving_point_array[0].y - m_initialFingerPosition.y();
-            QVector3D camUpDirection(0,1,0), camRightDirection(1,0,0);
-            m_camOrigin+=camRightDirection * -deltaX/6.3f * m_camDistanceToOrigin/150.0f;
-            m_camOrigin+=camUpDirection * deltaY/6.3f * m_camDistanceToOrigin/150.0f;
-            updateGL();
-            std::cout << "Camera moved by (" << deltaX<<" , "<< deltaY<<")"<<std::endl;
-            m_initialFingerPosition.setX((qreal)pFrame.pf_moving_point_array[0].x);
-            m_initialFingerPosition.setY((qreal)pFrame.pf_moving_point_array[0].y);
+            if(pFrame.pf_moving_point_array[0].point_event==TP_DOWN&&pFrame.pf_moving_point_count==1)
+            {
+                m_initialFingerPosition.setX((int)pFrame.pf_moving_point_array[0].x);
+                m_initialFingerPosition.setY((int)pFrame.pf_moving_point_array[0].y);
+            }
+            if(pFrame.pf_moving_point_array[0].point_event==TP_MOVE&&pFrame.pf_moving_point_count==1)
+            {
+                double deltaX = pFrame.pf_moving_point_array[0].x - m_initialFingerPosition.x();
+                double deltaY = pFrame.pf_moving_point_array[0].y - m_initialFingerPosition.y();
+                QVector3D camUpDirection(0,1,0), camRightDirection(1,0,0);
+                m_camOrigin+=camRightDirection * -deltaX/6.3f * m_camDistanceToOrigin/150.0f;
+                m_camOrigin+=camUpDirection * deltaY/6.3f * m_camDistanceToOrigin/150.0f;
+                updateGL();
+                std::cout << "Camera moved by (" << deltaX<<" , "<< deltaY<<")"<<std::endl;
+                m_initialFingerPosition.setX((int)pFrame.pf_moving_point_array[0].x);
+                m_initialFingerPosition.setY((int)pFrame.pf_moving_point_array[0].y);
+            }
+            if(pFrame.pf_moving_point_count>1&& pFrame.pf_moving_point_array[0].point_event==TP_UP)
+            {
+                AVTouchPoint e;
+                e.point_event=TP_UP;
+                e.x=0;
+                e.y=0;
+                e.dx=0;
+                e.dy=0;
+                for(int i = 0; i < pFrame.pf_moving_point_count; ++ i){
+                    TouchPoint tp = pFrame.pf_moving_point_array[i];
+                    e.id=tp.id;
+                    e.x+=tp.x;
+                    e.y+=tp.y;
+                    e.dx+=tp.dx;
+                    e.dy+=tp.dy;
+                }
+                e.x=(int)e.x/pFrame.pf_moving_point_count;
+                e.y=(int)e.y/pFrame.pf_moving_point_count;
+                e.dx=(unsigned short)e.dx/pFrame.pf_moving_point_count;
+                e.dy=(unsigned short)e.dy/pFrame.pf_moving_point_count;
+                catchEvent(e);
+            }
         }
     }
+//    }
 }
 
 void AVGLWidget::catchEvent(AVTouchPoint &tPoint)

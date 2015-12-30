@@ -165,6 +165,8 @@ private:
 
     QPoint      m_lastMousePosition;
     QPoint      m_initialFingerPosition;
+    QPoint      m_iZS;
+    QPoint      m_nZS;
     QVector<QPointF>      m_lastTouchPosition;
     QVector3D   m_camOrigin;
     QVector3D   m_camPosition;
