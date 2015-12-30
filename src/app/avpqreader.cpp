@@ -11,7 +11,7 @@ using namespace PQ_SDK_MultiTouch;
 using namespace std;
 
 int moveThreshold;
-const int moveResolution=15;
+const int moveResolution=5;
 int counter =0;
 AVPQReader* AVPQReader::m_instance = 0;
 

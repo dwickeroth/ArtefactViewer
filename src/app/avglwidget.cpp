@@ -997,37 +997,45 @@ void AVGLWidget::drawOverlays(QPaintDevice *device, bool offscreen, int fboWidth
 /////////////////////////////////////////////////////////////////
 ///////////////////////////TOUCH EVENTS//////////////////////////
 /////////////////////////////////////////////////////////////////
-
-
 void AVGLWidget::catchPF(AVPointFrame pFrame)
 {
+    if(pFrame.pf_moving_point_count==1)
+        if(!m_shiftDown)
 
-    for(int i = 0; i < pFrame.pf_moving_point_count; ++ i){
-            TouchPoint tp = pFrame.pf_moving_point_array[i];
-                AVTouchPoint e;
-                e.point_event=tp.point_event;
-                e.id=tp.id;
-                e.x=tp.x;
-                e.y=tp.y;
-                e.dx=tp.dx;
-                e.dy=tp.dy;
-            catchEvent(e);
+        {
+
+                for(int i = 0; i < pFrame.pf_moving_point_count; ++ i){
+                        TouchPoint tp = pFrame.pf_moving_point_array[i];
+                            AVTouchPoint e;
+                            e.point_event=tp.point_event;
+                            e.id=tp.id;
+                            e.x=tp.x;
+                            e.y=tp.y;
+                            e.dx=tp.dx;
+                            e.dy=tp.dy;
+                        catchEvent(e);
+                    }
+
+        }else
+    {    if(pFrame.pf_moving_point_array[0].point_event==TP_DOWN)
+        {
+            m_initialFingerPosition.setX((qreal)pFrame.pf_moving_point_array[0].x);
+            m_initialFingerPosition.setY((qreal)pFrame.pf_moving_point_array[0].y);
+            std::cout << "Initial Position is (" << m_initialFingerPosition.x()<<","<<m_initialFingerPosition.y()<<")"<<std::endl;
         }
-
-//        m_initialFingerPosition.setX((qreal)pFrame.pf_moving_point_array[0].x);
-//        m_initialFingerPosition.setY((qreal)pFrame.pf_moving_point_array[0].y);
-//        std::cout << "Initial Position is (" << m_initialFingerPosition.x()<<","<<m_initialFingerPosition.y()<<")"<<std::endl;
-
-//    double deltaX = pFrame.pf_moving_point_array[0].x - m_initialFingerPosition.x();
-//    double deltaY = pFrame.pf_moving_point_array[0].y - m_initialFingerPosition.y();
-
-//    if(pFrame.pf_moving_point_count==1&&(deltaX>50||deltaY>50)){
-//        QVector3D camUpDirection(0,1,0), camRightDirection(1,0,0);
-//        m_camOrigin+=camRightDirection * -deltaX/6.3f * m_camDistanceToOrigin/150.0f;
-//        m_camOrigin+=camUpDirection * deltaY/6.3f * m_camDistanceToOrigin/150.0f;
-//        updateGL();
-//        std::cout << "Camera moved by (" << pFrame.pf_moving_point_array[0].x<<" , "<< m_initialFingerPosition.x()<<")"<<std::endl;
-//    }
+        if(pFrame.pf_moving_point_array[0].point_event==TP_MOVE)
+        {
+            double deltaX = pFrame.pf_moving_point_array[0].x - m_initialFingerPosition.x();
+            double deltaY = pFrame.pf_moving_point_array[0].y - m_initialFingerPosition.y();
+            QVector3D camUpDirection(0,1,0), camRightDirection(1,0,0);
+            m_camOrigin+=camRightDirection * -deltaX/6.3f * m_camDistanceToOrigin/150.0f;
+            m_camOrigin+=camUpDirection * deltaY/6.3f * m_camDistanceToOrigin/150.0f;
+            updateGL();
+            std::cout << "Camera moved by (" << deltaX<<" , "<< deltaY<<")"<<std::endl;
+            m_initialFingerPosition.setX((qreal)pFrame.pf_moving_point_array[0].x);
+            m_initialFingerPosition.setY((qreal)pFrame.pf_moving_point_array[0].y);
+        }
+    }
 }
 
 void AVGLWidget::catchEvent(AVTouchPoint &tPoint)
@@ -1042,28 +1050,28 @@ void AVGLWidget::catchEvent(AVTouchPoint &tPoint)
     if(localPos.x()>0&&localPos.x()<width() &&localPos.y()>0&&localPos.y()<height()){
         switch(tPoint.point_event)
         {
-            case TP_DOWN:
-                cout << "  Finger " << (int)tPoint.id << " touched at (" << localPos.x() << "," << (int)localPos.y()
-                     << ") width:" << tPoint.dx << " height:" << tPoint.dy << endl;
-                m_trackball->push(pixelPosToViewPos(localPos), QQuaternion());
+        case TP_DOWN:
+            cout << "  Finger " << (int)tPoint.id << " touched at (" << localPos.x() << "," << (int)localPos.y()
+                 << ") width:" << tPoint.dx << " height:" << tPoint.dy << endl;
+            m_trackball->push(pixelPosToViewPos(localPos), QQuaternion());
             break;
-            case TP_MOVE:
-                cout<<"  Finger " << (int)tPoint.id <<" is moving at: (" <<localPos.x ()<< "," << localPos.y() << ")" << endl;
-                rotation = m_trackball->move(pixelPosToViewPos(localPos), m_MatrixArtefact);
-                m_MatrixArtefact.translate(m_model->m_centerPoint);
-                m_MatrixArtefact.translate(m_camOrigin);
-                m_MatrixArtefact.rotate(rotation);
-                m_MatrixArtefact.translate(-m_camOrigin);
-                m_MatrixArtefact.translate(-m_model->m_centerPoint);
-                break;
-            case TP_UP:
-                cout << "  Finger " << (int)tPoint.id << " left at (" << localPos.x() << "," << localPos.y()
-                     << ") width:" << tPoint.dx << " height:" << tPoint.dy << endl;
-                m_trackball->release(pixelPosToViewPos(localPos), m_MatrixArtefact);
-                break;
+        case TP_MOVE:
+            cout<<"  Finger " << (int)tPoint.id <<" is moving at: (" <<localPos.x ()<< "," << localPos.y() << ")" << endl;
+            rotation = m_trackball->move(pixelPosToViewPos(localPos), m_MatrixArtefact);
+            m_MatrixArtefact.translate(m_model->m_centerPoint);
+            m_MatrixArtefact.translate(m_camOrigin);
+            m_MatrixArtefact.rotate(rotation);
+            m_MatrixArtefact.translate(-m_camOrigin);
+            m_MatrixArtefact.translate(-m_model->m_centerPoint);
+            break;
+        case TP_UP:
+            cout << "  Finger " << (int)tPoint.id << " left at (" << localPos.x() << "," << localPos.y()
+                 << ") width:" << tPoint.dx << " height:" << tPoint.dy << endl;
+            m_trackball->release(pixelPosToViewPos(localPos), m_MatrixArtefact);
+            break;
         }
-}
-        updateGL();
+    }
+    updateGL();
 
 }
 
