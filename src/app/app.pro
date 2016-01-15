@@ -66,3 +66,6 @@ win32: LIBS += -L$$PWD/../lib/x64/ -lPQMTClient
 
 INCLUDEPATH += $$PWD/../include
 DEPENDPATH += $$PWD/../include
+
+OTHER_FILES += \
+    BLAH.txt

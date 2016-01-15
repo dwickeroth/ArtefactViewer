@@ -81,7 +81,8 @@ int AVPQReader::Init()
 void AVPQReader::SetFuncsOnReceiveProc()
 {
     cout<<"function settings are being called"<<endl;
-    PFuncOnReceivePointFrame old_rf_func = SetOnReceivePointFrame(&AVPQReader::OnReceivePointFrame,this);
+    //PFuncOnReceivePointFrame old_rf_func = SetOnReceivePointFrame(&AVPQReader::OnReceivePointFrame,this);
+    PFuncOnReceivePointFrame old_rf_func = SetOnReceivePointFrame(&AVPQReader::OnReceivePointFrame,NULL);
     PFuncOnReceiveGesture old_rg_func = SetOnReceiveGesture(&AVPQReader::OnReceiveGesture,this);
     PFuncOnServerBreak old_svr_break = SetOnServerBreak(&AVPQReader::OnServerBreak,NULL);
     PFuncOnReceiveError old_rcv_err_func = SetOnReceiveError(&AVPQReader::OnReceiveError,NULL);
@@ -91,29 +92,36 @@ void AVPQReader::SetFuncsOnReceiveProc()
 void AVPQReader:: OnReceivePointFrame(int frame_id, int time_stamp, int moving_point_count, const TouchPoint * moving_point_array, void * call_back_object)
 {
 
-    AVPQReader * sample = static_cast<AVPQReader*>(call_back_object);
-    assert(sample != NULL);
+    //AVPQReader * sample = static_cast<AVPQReader*>(call_back_object);
+    //assert(sample != NULL);
     AVPointFrame pf;
     pf.pf_frame_id=frame_id;
     pf.pf_time_stamp=time_stamp;
     pf.pf_moving_point_count=moving_point_count;
     pf.pf_moving_point_array=moving_point_array;
-    if(counter%moveResolution==0||pf.pf_moving_point_array[0].point_event==TP_DOWN||pf.pf_moving_point_array[0].point_event==TP_UP){
-        sample->OnTouchPoint(pf);
-        for(int i = 0; i < moving_point_count; ++ i){
-            switch(moving_point_array[i].point_event){
-            case TP_DOWN:
-                std::cout<< "type "<<(int) moving_point_array[i].point_event<<" Touch"<<std::endl;
-                break;
-            case TP_MOVE:
-                std::cout<< "type "<<(int) moving_point_array[i].point_event<<" Move"<<std::endl;
-                break;
-            case TP_UP:
-                std::cout<< "type "<<(int) moving_point_array[i].point_event<<" End Touch"<<std::endl;
-                break;
-            }
-            //        std::cout<<(int) moving_point_array[i].point_event<<std::endl;
-        }
+    if(counter%moveResolution==0||pf.pf_moving_point_array[0].point_event==TP_DOWN||pf.pf_moving_point_array[0].point_event==TP_UP)
+    {
+        m_instance->OnTouchPoint(pf);
+
+//        for(int i = 0; i < moving_point_count; ++ i){
+//            switch(moving_point_array[i].point_event){
+//            case TP_DOWN:
+//                std::cout<<(int) moving_point_array[i].point_event<<"Means touch"<<std::endl;
+//                break;
+//            case TP_MOVE:
+//                std::cout<<(int) moving_point_array[i].point_event<<"Means move"
+//                         <<" at ("<<(int) moving_point_array[i].x
+//                        <<" , "<<(int) moving_point_array[i].y
+//                       <<")."
+//                      <<std::endl;
+//                break;
+//            case TP_UP:
+//                std::cout<<(int) moving_point_array[i].point_event<<"Means left"<<std::endl;
+//                break;
+//            }
+//                    std::cout<<(int) moving_point_array[i].point_event<<std::endl;
+//        }
+
     }
     counter++;
 }

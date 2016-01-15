@@ -163,11 +163,13 @@ private:
 
     double      m_camDistanceToOrigin;
 
+
     QPoint      m_lastMousePosition;
-    QPoint      m_initialFingerPosition;
-    QPoint      m_iZS;
-    QPoint      m_nZS;
-    QVector<QPointF>      m_lastTouchPosition;
+    QPoint      m_iFP; //!initial finger position
+    QPointF      m_iZS; //!initial zoom separation
+    QPointF      m_nZS; //!new zoom separation
+    QVector<QPointF>      m_lastTouchPosition; //!list of last positions where the fingers were
+
     QVector3D   m_camOrigin;
     QVector3D   m_camPosition;
     QVector3D   m_LeftCamPosition;
@@ -177,6 +179,11 @@ private:
 
     //private members without getters/setters
     double      m_eyeSeparation;
+
+    static const
+    int  m_jumpSize=40;
+    static const
+    int      m_zoomTolerance=10;
 
     QMatrix4x4  m_pMatrix;
     QMatrix4x4  m_vMatrix;
