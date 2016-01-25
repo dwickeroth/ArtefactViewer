@@ -41,6 +41,8 @@ public:
 //    void setGLWidget(AVGLWidget* glWidget);
     AVTouchPoint e;
     AVPointFrame pf;
+    static const int moveResolution=24;
+
 signals:
 //    void throwEvent(AVTouchPoint event);
     void throwPF(AVPointFrame pFrame);
