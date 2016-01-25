@@ -40,9 +40,11 @@ HEADERS  += avmainwindow.h \
     avoffscreendialog.h \
     avlight.h \
     PQMTClient.h \
-    avpqreader.h \
-    avtouchpoint.h \
-    avpointframe.h
+    avpointframe.h \
+    Kinect.h \
+    AVKinector.h \
+    AVPQReader.h \
+    AVTouchPoint.h
 
 FORMS    += avmainwindow.ui \
     about.ui \
@@ -69,3 +71,8 @@ DEPENDPATH += $$PWD/../include
 
 OTHER_FILES += \
     BLAH.txt
+
+unix|win32: LIBS += -L$$PWD/../../Kinect/Lib/x64/ -lKinect20
+
+INCLUDEPATH += $$PWD/../../Kinect/Lib/x64
+DEPENDPATH += $$PWD/../../Kinect/Lib/x64

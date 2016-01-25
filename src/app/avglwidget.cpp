@@ -35,6 +35,8 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 #include "avtouchpoint.h"
 #include "avpointframe.h"
 #include "iostream"
+#include "kinect.h"
+
 using namespace std;
 int slower=0;
 bool zooming=false;
@@ -52,6 +54,7 @@ AVGLWidget::AVGLWidget(QWidget *parent) : QGLWidget(QGLFormat(QGL::SampleBuffers
     setAutoFillBackground(false);
     setAutoBufferSwap(false);
     m_trackball = new AVTrackBall(AVTrackBall::Sphere);
+
 }
 
 AVGLWidget::~AVGLWidget()
