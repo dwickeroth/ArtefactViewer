@@ -28,6 +28,7 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 #include <QDesktopWidget>
 
 #include "math.h"
+#include "AVKinector.h"
 #include "avmodel.h"
 #include "avmainwindow.h"
 #include "avtrackball.h"
@@ -45,6 +46,7 @@ AVGLWidget::AVGLWidget(QWidget *parent) : QGLWidget(QGLFormat(QGL::SampleBuffers
     m_model = AVModel::instance();
     m_pMatrix.setToIdentity();
     m_model->setupLightGeometry();
+//    m_kinect= AVKinector::instance();
     QGLFormat stereoFormat;
     stereoFormat.setSampleBuffers(true);
     stereoFormat.setStereo(true);
@@ -995,7 +997,10 @@ void AVGLWidget::drawOverlays(QPaintDevice *device, bool offscreen, int fboWidth
 
 
 
-
+void AVGLWidget::catchKP(AVHand mano)
+{
+cout<<"blah"<<endl;
+}
 
 
 
@@ -1006,6 +1011,10 @@ void AVGLWidget::drawOverlays(QPaintDevice *device, bool offscreen, int fboWidth
 //if at any time there are objects on the touchscreen, this function is called
 void AVGLWidget::catchPF(AVPointFrame pFrame)
 {
+
+//    if(SUCCEEDED(m_kinect->m_pCoordinateMapper->)
+//        widgetingKinect(m_bf);
+//    m_kinect->Update();
     QPointF screenPosCam;
     QPointF localPosCam;
     //if there is one point, translation movement is called

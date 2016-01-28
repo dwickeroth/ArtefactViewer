@@ -5,13 +5,12 @@
 #include <QString>
 #include <QColor>
 
-
+class AVKinector;
 class AVMainWindow;
 class AVPluginManager;
 class AVModel;
 class AVGLWidget;
 class AVPQReader;
-class AVPointFrame;
 
 class AVController
 {
@@ -59,6 +58,7 @@ private:
     AVModel*                m_model;
     AVGLWidget*             m_glWidget;
     AVPQReader*             m_pqReader;
+    AVKinector*             m_Kinector;
 
     QString                 m_currentlyOpenFile;
     bool                    m_xmlFileAlreadyExists;

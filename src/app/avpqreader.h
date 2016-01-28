@@ -1,6 +1,8 @@
 #ifndef AVPQREADER_H
 #define AVPQREADER_H
+#define NOMINMAX
 #include "PQMTClient.h"
+#include "Kinect.h"
 #include <QMutex>
 #include <QPoint>
 #include <QPointF>
@@ -41,7 +43,7 @@ public:
 //    void setGLWidget(AVGLWidget* glWidget);
     AVTouchPoint e;
     AVPointFrame pf;
-    static const int moveResolution=24;
+    static const int moveResolution=10;
 
 signals:
 //    void throwEvent(AVTouchPoint event);

@@ -27,7 +27,9 @@ SOURCES +=\
     avtrackball.cpp \
     avoffscreendialog.cpp \
     avlight.cpp \
-    avpqreader.cpp
+    AVKinector.cpp \
+    AVPQReader.cpp \
+    BodyBasics.cpp
 
 HEADERS  += avmainwindow.h \
     avcontroller.h \
@@ -44,7 +46,11 @@ HEADERS  += avmainwindow.h \
     Kinect.h \
     AVKinector.h \
     AVPQReader.h \
-    AVTouchPoint.h
+    AVTouchPoint.h \
+    BodyBasics.h \
+    resource.h \
+    stdafx.h \
+    avhand.h
 
 FORMS    += avmainwindow.ui \
     about.ui \

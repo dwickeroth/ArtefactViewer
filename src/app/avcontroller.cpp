@@ -1,6 +1,6 @@
 #include "avcontroller.h"
-
 #include "avglwidget.h"
+#include "AVKinector.h"
 #include "avmainwindow.h"
 #include "avmodel.h"
 #include "avplugininterfaces.h"
@@ -20,7 +20,7 @@ AVController::AVController()
     m_mainWindow = AVMainWindow::instance();
     m_glWidget = new AVGLWidget(m_mainWindow);
     m_pqReader= AVPQReader::instance();
-
+    m_Kinector= AVKinector::instance();
     int err_code=m_pqReader->Init();
     std::cout<<"We started the PQReader, the initialization code is "<<err_code<<std::endl;
     m_glWidget->setFocusPolicy(Qt::StrongFocus);
@@ -48,6 +48,12 @@ AVController::AVController()
 
     std::cout<<"connected SigSlot"<<std::endl;
 
+    qRegisterMetaType<AVHand>("AVHand");
+
+    QObject::connect(m_Kinector,SIGNAL(throwKP(AVHand)),
+                     m_glWidget,SLOT(catchKP(AVHand)));
+
+    std::cout<<"connected SigSlot"<<std::endl;
 }
 
 

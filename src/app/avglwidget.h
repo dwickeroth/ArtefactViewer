@@ -28,6 +28,8 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 #include <QGLBuffer>
 #include <QGLFunctions>
 
+#include "avhand.h"
+#include "AVKinector.h"
 #include "avlight.h"
 #include "avtrackball.h"
 #include "avtouchpoint.h"
@@ -35,6 +37,7 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 
 class AVModel;
 class AVTrackBall;
+class AVKinector;
 
 
 class AVGLWidget: public QGLWidget, protected QGLFunctions
@@ -46,6 +49,10 @@ public:
     ~AVGLWidget();
     AVTrackBall*  m_trackball;
     AVModel*    m_model;
+    AVKinector* m_kinect;
+//    IBodyFrameReader*       m_pBodyFrameReader;
+
+
     void    initialize();
 
     QVector<AVLight> m_lights;
@@ -108,11 +115,13 @@ public:
 
 
 public slots:
+    void catchKP(AVHand mano);
     void catchPF(AVPointFrame pFrame);
 
 
 private:
     void setZoomLevel(double level, bool relative);
+//    void AVGLWidget::widgetingKinect(IBodyFrame boFr);
 
 signals:
     void annotationClicked();
