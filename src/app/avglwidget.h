@@ -50,8 +50,6 @@ public:
     AVTrackBall*  m_trackball;
     AVModel*    m_model;
     AVKinector* m_kinect;
-//    IBodyFrameReader*       m_pBodyFrameReader;
-
 
     void    initialize();
 
@@ -121,7 +119,10 @@ public slots:
 
 private:
     void setZoomLevel(double level, bool relative);
-//    void AVGLWidget::widgetingKinect(IBodyFrame boFr);
+    void kinectCount(AVHand mano);
+    void resetLeftKinectCounts();
+    void resetRightKinectCounts();
+
 
 signals:
     void annotationClicked();
@@ -170,14 +171,16 @@ private:
     bool        m_vertexColors;
     bool        m_paintAnnotations;
 
+    bool        m_kinectIsWatching;
+    bool        m_kRTr; //!Kinect right Traslation on
+    bool        m_kLTr; //!Kinect right Traslation on
+    bool        m_kRot; //! Kinect Rotation on
+
+
     double      m_camDistanceToOrigin;
 
 
     QPoint      m_lastMousePosition;
-    QPoint      m_iFP; //!initial finger position
-    QPointF      m_iZS; //!initial zoom separation
-    QPointF      m_nZS; //!new zoom separation
-    QVector<QPointF>      m_lastTouchPosition; //!list of last positions where the fingers were
 
     QVector3D   m_camOrigin;
     QVector3D   m_camPosition;
@@ -186,8 +189,33 @@ private:
     QVector3D   m_backgroundColor1;
     QVector3D   m_backgroundColor2;
 
+    QVector4D   m_kInitialTr;//! Kinect Translation start point
+    QVector4D   m_kNewTr;//! Kinect Translation update point
+    QVector4D   m_kResTr;//! Kinect Translation result
+
+    QVector4D   m_kInitialRot; //!Kinect Rotation start point
+    QVector4D   m_kNewRot;  //!Kinect Rotation update point
+    QVector4D   m_kResRot;//! Kinect Translation result
+
+
     //private members without getters/setters
     double      m_eyeSeparation;
+    bool        zooming;
+    unsigned int         m_kLUC; //! kinect unknown count
+    unsigned int         m_kLNTC; //! kinect not tracked count
+    unsigned int         m_kLOC; //! kinect open count
+    unsigned int         m_kLCC; //! kinect closed count
+    unsigned int         m_kLLC; //! kinect lasso count
+    unsigned int         m_kRUC; //! kinect unknown count
+    unsigned int         m_kRNTC; //! kinect not tracked count
+    unsigned int         m_kROC; //! kinect open count
+    unsigned int         m_kRCC; //! kinect closed count
+    unsigned int         m_kRLC; //! kinect lasso count
+    unsigned int         m_slowDownTrackball; //!accumulates Touchscreen events when 3+fingers move
+    QPoint      m_iFP; //!initial finger position
+    QPointF      m_iZS; //!initial zoom separation
+    QPointF      m_nZS; //!new zoom separation
+    QVector<QPointF>      m_lastTouchPosition; //!list of last positions where the fingers were
 
     static const
     int  m_jumpSize=40;

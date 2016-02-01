@@ -7,7 +7,6 @@
 #include <QPoint>
 #include <QPointF>
 #include "avglwidget.h"
-#include "avpointframe.h"
 #include "resource.h"
 
 //class AVKinector
@@ -16,52 +15,51 @@
 //    AVKinector();
 //};
 
-
-
-
 class AVKinector : public QThread
 {
     Q_OBJECT
 
 public:
+    AVKinector(QObject* parent = 0);
 
-    static AVKinector* instance()
-    {
-        static QMutex mutex;
-        if(!m_instance)
-        {
-            mutex.lock();
-            if(!m_instance) m_instance = new AVKinector;
-            mutex.unlock();
-        }
-        return m_instance;
-    }
+//    static AVKinector* instance()
+//    {
+//        static QMutex mutex;
+//        if(!m_instance)
+//        {
+//            mutex.lock();
+//            if(!m_instance) m_instance = new AVKinector;
+//            mutex.unlock();
+//        }
+//        return m_instance;
+//    }
 
-    static void destroy()
-    {
-        static QMutex mutex;
-        mutex.lock();
-        delete m_instance;
-        m_instance = 0;
-        mutex.unlock();
-        DisconnectServer();
-    }
-    void threader();
+//    static void destroy()
+//    {
+//        static QMutex mutex;
+//        mutex.lock();
+//        delete m_instance;
+//        m_instance = 0;
+//        mutex.unlock();
+//        DisconnectServer();
+//    }
+//    void threader();
 
     int Init();
 
 signals:
     void throwKP (AVHand mano);
 
-private:
-    explicit AVKinector(QObject* parent = 0);
+//private:
+public:
+//    explicit AVKinector(QObject* parent = 0);
     // we leave just the declarations, so the compiler will warn us
     // if we try to use those two functions by accident
-    AVKinector(const AVKinector &); //hide copy constructor
-    AVKinector& operator=(const AVKinector &); //hide assign op
+//    AVKinector(const AVKinector &); //hide copy constructor
+//    AVKinector& operator=(const AVKinector &); //hide assign op
     ~AVKinector();
 //    AVGLWidget*         m_glWidget;
-    static AVKinector* m_instance;
+//    static AVKinector* m_instance;
 public:
     bool                    m_activated;
     HWND                    m_hWnd;
@@ -81,6 +79,7 @@ public:
 
     /// Main processing function
     void                    Update();
+    virtual void                    run();
 
     /// Initializes the default Kinect sensor
     /// <returns>S_OK on success, otherwise failure code</returns>

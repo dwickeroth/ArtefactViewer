@@ -29,7 +29,8 @@ SOURCES +=\
     avlight.cpp \
     AVKinector.cpp \
     AVPQReader.cpp \
-    BodyBasics.cpp
+    BodyBasics.cpp \
+    Kinector.cpp
 
 HEADERS  += avmainwindow.h \
     avcontroller.h \

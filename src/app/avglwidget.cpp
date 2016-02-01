@@ -39,14 +39,13 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 #include "kinect.h"
 
 using namespace std;
-int slower=0;
-bool zooming=false;
+
 AVGLWidget::AVGLWidget(QWidget *parent) : QGLWidget(QGLFormat(QGL::SampleBuffers), parent)
 {
     m_model = AVModel::instance();
     m_pMatrix.setToIdentity();
     m_model->setupLightGeometry();
-//    m_kinect= AVKinector::instance();
+    //    m_kinect= AVKinector::instance();
     QGLFormat stereoFormat;
     stereoFormat.setSampleBuffers(true);
     stereoFormat.setStereo(true);
@@ -56,7 +55,18 @@ AVGLWidget::AVGLWidget(QWidget *parent) : QGLWidget(QGLFormat(QGL::SampleBuffers
     setAutoFillBackground(false);
     setAutoBufferSwap(false);
     m_trackball = new AVTrackBall(AVTrackBall::Sphere);
-
+    m_slowDownTrackball=0;
+    zooming=false;
+    m_kLTr=false;
+    m_kRTr=false;
+    m_kRot=false;
+    m_kLUC=0;
+    m_kLNTC=0;
+    m_kRUC=0;
+    m_kRNTC=0;
+    resetRightKinectCounts();
+    resetLeftKinectCounts();
+    m_kinectIsWatching=false;
 }
 
 AVGLWidget::~AVGLWidget()
@@ -987,23 +997,203 @@ void AVGLWidget::drawOverlays(QPaintDevice *device, bool offscreen, int fboWidth
 
 
 
-
-
-
-
-
-
-
-
-
-
 void AVGLWidget::catchKP(AVHand mano)
 {
-cout<<"blah"<<endl;
+    //    cout<<"Left Open "<<m_kLOC<<", Right Open "<<m_kROC<<", Left Closed "<<m_kLCC<<", Right Closed "<<m_kRCC
+    //        <<", LUK "<<m_kLUC<<", RUK "<<m_kRUC<<", LNT "<<m_kLNTC<<", RNT "<<m_kRNTC<<endl;
+    //!if both hands have been open for more than 3 seconds, kinect starts watching
+    if(m_kLOC>50&&m_kROC>50&&m_kinectIsWatching==false){
+        cout<<"Started reading"<<endl;
+        m_kinectIsWatching=true;
+        return;
+    }
+
+    //!if translation is off and kinect is watching and the signal is from the left hand, we begin to translate with left.
+
+    if( !m_kLTr&&(m_kinectIsWatching&&(m_kLCC==50&&m_kROC>50))&&mano.isLeft)
+    {
+        m_kLTr=true;
+
+        m_kInitialTr= QVector4D((qreal)-mano.x,(qreal)-mano.z,(qreal)mano.y, 1);
+        //                     m_kInitialTr= QVector4D((qreal)mano.x,(qreal)mano.y,(qreal)mano.z, 1);
+        cout<<"begin left translation at ("
+           <<m_kInitialTr.x()<< " , "
+          <<m_kInitialTr.y()<< " , "
+         <<m_kInitialTr.z()<< ")"
+        <<endl;    }
+    //!if translation is off and kinect is watching and the signal is from the right hand, we begin to translate with right.
+
+    if( !m_kRTr&&(m_kinectIsWatching&&((m_kLOC>50&&m_kRCC==50)&&!mano.isLeft)))
+    {
+        m_kRTr=true;
+        m_kInitialTr= QVector4D((qreal)-mano.x,(qreal)-mano.z,(qreal)mano.y, 1);
+        cout<<"begin right translation at ("
+           <<m_kInitialTr.x()<< " , "
+          <<m_kInitialTr.y()<< " , "
+         <<m_kInitialTr.z()<< ")"
+        <<endl;
+    }
+
+    //!if kinect is watching and left translation is on and the signal is from the left hand, we translate with left.
+
+    if(m_kinectIsWatching&&m_kLTr&&mano.isLeft)
+    {
+        //        m_kNewTr= QVector4D((qreal)-mano.x,(qreal)mano.y,(qreal)mano.z, 1);
+        m_kNewTr= QVector4D((qreal)-mano.x,(qreal)-mano.z,(qreal)mano.y, 1);
+        m_kResTr=1000*(m_kInitialTr-m_kNewTr);
+        cout<<"Translating with left! moved by( "
+           <<m_kResTr.x()<<" , "
+          <<m_kResTr.y()<<" , "
+         <<m_kResTr.z()<<") "
+        <<endl;
+        if(m_kResTr.x()<10&&m_kResTr.y()<10&&m_kResTr.z()<10){
+            m_MatrixArtefact.translate(m_kResTr.toVector3D());
+            //        m_vMatrix.translate(m_kResTr.toVector3D());
+            //        m_pMatrix.translate(m_kResTr.toVector3D());
+        }
+
+        updateGL();
+        m_kInitialTr=m_kNewTr;
+        if(m_kROC==0||m_kLCC==0)
+        {
+            m_kLTr=false;
+            cout<<"stopped translation left"<<endl;
+        }
+    }
+
+    //!if kinect is watching and right translation is on and the signal is from the right hand, we translate with right.
+
+    if(m_kinectIsWatching&&m_kRTr&&!mano.isLeft)
+    {
+        //        m_kNewTr= QVector4D((qreal)-mano.x,(qreal)mano.y,(qreal)mano.z, 1);
+        m_kNewTr= QVector4D((qreal)-mano.x,(qreal)-mano.z,(qreal)mano.y, 1);
+        m_kResTr=1000*(m_kInitialTr-m_kNewTr);
+        cout<<"Translating with right! moved by ("
+           <<m_kResTr.x()<<" , "
+          <<m_kResTr.y()<<" , "
+         <<m_kResTr.z()<<") "
+        <<endl;
+        if(m_kResTr.x()<10&&m_kResTr.y()<10&&m_kResTr.z()<10){
+            m_MatrixArtefact.translate(m_kResTr.toVector3D());
+            //        m_vMatrix.translate(m_kResTr.toVector3D());
+            //        m_pMatrix.translate(m_kResTr.toVector3D());
+        }
+
+        updateGL();
+        m_kInitialTr=m_kNewTr;
+        if(m_kLOC==0||m_kRCC==0)
+        {
+            m_kRTr=false;
+            cout<<"stopped translation right"<<endl;
+        }
+    }
+
+
+
+    if(!m_kRot&&m_kinectIsWatching&&((m_kLCC>50&&m_kRCC==50)||(m_kLCC==50&&m_kRCC>50)))
+    {
+        m_kRTr=false;
+        m_kLTr=false;
+        m_kRot=true;
+        m_kInitialRot=QVector4D((qreal)mano.x,(qreal)mano.y,(qreal)mano.z, 1);
+        cout<<"stopped translation and began rotation with right hand at "
+           <<m_kResTr.x()<<" , "
+          <<m_kResTr.y()<<" , "
+         <<m_kResTr.z()<<") "
+        <<endl;
+    }
+
+    if(m_kLNTC>50&&m_kRNTC>50){
+        cout<<"Stopped reading, both hands untracked for more than 3s"<<endl;
+        m_kinectIsWatching=false;
+        m_kLNTC=0;
+        m_kRNTC=0;
+    }
+    if(m_kLUC>5000||m_kRUC>5000||m_kLNTC>5000||m_kRNTC>5000){
+        cout<<"Stopped reading, one or more hands were unrecognized or unknown for about 30s"<<endl;
+        m_kinectIsWatching=false;
+        m_kLNTC=0;
+        m_kRNTC=0;
+        m_kLUC=0;
+        m_kRUC=0;
+
+    }
+    AVGLWidget::kinectCount(mano);
 }
 
+void AVGLWidget::kinectCount(AVHand mano){
+    if(mano.hState==0&&mano.isLeft==true){
+        //        cout<<"Left hand state is unknown since "<<m_kLUC<<endl;
+        m_kLUC++;
+
+    }
+    if(mano.hState==1&&mano.isLeft==true){
+        //        cout<<"Left hand not tracked since "<<m_kLNTC<<endl;
+        resetLeftKinectCounts();
+        m_kLNTC++;
+    }
+    if(mano.hState==2&&mano.isLeft==true){
+        //        cout<<"Left hand is open since "<<m_kLOC<<endl;
+        m_kLOC++;
+        m_kLCC=0;
+        m_kLUC=0;
+        m_kLNTC=0;
+    }
+    if(mano.hState==3&&mano.isLeft==true){
+        //        cout<<"Left hand is closed since "<<m_kLCC<<endl;
+        m_kLCC++;
+        m_kLUC=0;
+        m_kLUC=0;
+        m_kLNTC=0;
+    }
+    if(mano.hState==4&&mano.isLeft==true){
+        //        cout<<"Left ONE IN A MILLION! Hand is Lasso since "<<m_kLLC<<endl;
+        m_kLLC++;
+    }
+    if(mano.hState==0&&mano.isLeft==false){
+        //        cout<<"Right hand state is unknown since "<<m_kRUC<<endl;
+         m_kRUC++;
+    }
+    if(mano.hState==1&&mano.isLeft==false){
+        //        cout<<"Right hand not tracked since "<<m_kRNTC<<endl;
+        resetRightKinectCounts();
+        m_kRNTC++;
+    }
+    if(mano.hState==2&&mano.isLeft==false){
+        //        cout<<"Right hand is open since "<<m_kROC<<endl;
+        m_kROC++;
+        m_kRCC=0;
+        m_kRUC=0;
+        m_kRNTC=0;
+
+    }
+    if(mano.hState==3&&mano.isLeft==false){
+        //        cout<<"Right hand is closed since "<<m_kRCC<<endl;
+        m_kRCC++;
+        m_kROC=0;
+        m_kRUC=0;
+        m_kRNTC=0;
+    }
+    if(mano.hState==4&&mano.isLeft==false){
+        //        cout<<"Right ONE IN A MILLION! Hand is Lasso since "<<m_kRLC<<endl;
+        m_kRLC++;
+    }
 
 
+
+}
+
+void AVGLWidget::resetLeftKinectCounts(){
+    m_kLOC=0;
+    m_kLCC=0;
+    m_kLLC=0;
+}
+
+void AVGLWidget::resetRightKinectCounts(){
+    m_kROC=0;
+    m_kRCC=0;
+    m_kRLC=0;
+}
 
 /////////////////////////////////////////////////////////////////
 ///////////////////////////TOUCH EVENTS//////////////////////////
@@ -1012,9 +1202,6 @@ cout<<"blah"<<endl;
 void AVGLWidget::catchPF(AVPointFrame pFrame)
 {
 
-//    if(SUCCEEDED(m_kinect->m_pCoordinateMapper->)
-//        widgetingKinect(m_bf);
-//    m_kinect->Update();
     QPointF screenPosCam;
     QPointF localPosCam;
     //if there is one point, translation movement is called
@@ -1061,7 +1248,7 @@ void AVGLWidget::catchPF(AVPointFrame pFrame)
                         //move the camera. TODO:move the object.
                         m_camOrigin+=camRightDirection * -deltaX/6.3f * m_camDistanceToOrigin/150.0f;
                         m_camOrigin+=camUpDirection * deltaY/6.3f * m_camDistanceToOrigin/150.0f;
-//                        std::cout << "Camera moved by (" << deltaX<<" , "<< deltaY<<")"<<std::endl;
+                        //                        std::cout << "Camera moved by (" << deltaX<<" , "<< deltaY<<")"<<std::endl;
                     }
                     else{
                         std::cout << "Camera jumped by (" << deltaX<<" , "<< deltaY<<")"<<std::endl;
@@ -1117,52 +1304,52 @@ void AVGLWidget::catchPF(AVPointFrame pFrame)
             else{
                 m_nZS.setX((qreal)(pFrame.pf_moving_point_array[0].x-pFrame.pf_moving_point_array[1].x));
                 m_nZS.setY((qreal)(pFrame.pf_moving_point_array[0].y-pFrame.pf_moving_point_array[1].y));
-//                std::cout<<"Zooming by 1 or 2 Down"<<std::endl;
-            //zooming takes place if one of the fingers is moving and zooming is on:
-            if(zooming&&pFrame.pf_moving_point_array[0].point_event==TP_MOVE&&
-                    pFrame.pf_moving_point_array[1].point_event==TP_MOVE)
-            {
-//                //on pinch zoom in
-//                if(m_iZS.manhattanLength()-m_nZS.manhattanLength()>m_zoomTolerance)
-//                {
-//                    setZoomLevel(1.01, true);
-//                    std::cout<<"Zooming IN"<<std::endl;
-//                }
-//                //on split zoom out
-//                if(m_iZS.manhattanLength()-m_nZS.manhattanLength()<-m_zoomTolerance)
-//                {
-//                    setZoomLevel(0.99, true);
-//                    std::cout<<"Zooming IN"<<std::endl;
-//                }
+                //                std::cout<<"Zooming by 1 or 2 Down"<<std::endl;
+                //zooming takes place if one of the fingers is moving and zooming is on:
+                if(zooming&&pFrame.pf_moving_point_array[0].point_event==TP_MOVE&&
+                        pFrame.pf_moving_point_array[1].point_event==TP_MOVE)
+                {
+                    //                //on pinch zoom in
+                    //                if(m_iZS.manhattanLength()-m_nZS.manhattanLength()>m_zoomTolerance)
+                    //                {
+                    //                    setZoomLevel(1.01, true);
+                    //                    std::cout<<"Zooming IN"<<std::endl;
+                    //                }
+                    //                //on split zoom out
+                    //                if(m_iZS.manhattanLength()-m_nZS.manhattanLength()<-m_zoomTolerance)
+                    //                {
+                    //                    setZoomLevel(0.99, true);
+                    //                    std::cout<<"Zooming IN"<<std::endl;
+                    //                }
 
-                //on split zoom in
-                if(m_iZS.manhattanLength()-m_nZS.manhattanLength()>m_zoomTolerance)
-                {
-                    setZoomLevel(m_iZS.manhattanLength()/m_nZS.manhattanLength(), true);
-                    std::cout<<"Zooming IN"<<m_iZS.manhattanLength()/m_nZS.manhattanLength()*100<<std::endl;
+                    //on split zoom in
+                    if(m_iZS.manhattanLength()-m_nZS.manhattanLength()>m_zoomTolerance)
+                    {
+                        setZoomLevel(m_iZS.manhattanLength()/m_nZS.manhattanLength(), true);
+                        std::cout<<"Zooming IN"<<m_iZS.manhattanLength()/m_nZS.manhattanLength()*100<<std::endl;
+                    }
+                    //on pinch zoom out
+                    if(m_iZS.manhattanLength()-m_nZS.manhattanLength()<-m_zoomTolerance)
+                    {
+                        setZoomLevel(1.01*m_iZS.manhattanLength()/m_nZS.manhattanLength(), true);
+                        std::cout<<"Zooming OUT"<<m_iZS.manhattanLength()/m_nZS.manhattanLength()*100<<std::endl;
+                    }
+                    //reset initial zoom separation
+                    m_iZS=m_nZS;
                 }
-                //on pinch zoom out
-                if(m_iZS.manhattanLength()-m_nZS.manhattanLength()<-m_zoomTolerance)
+                //zooming ends if one finger goes up
+                if(zooming&&pFrame.pf_moving_point_array[0].point_event==TP_UP
+                        ||pFrame.pf_moving_point_array[1].point_event==TP_UP)
                 {
-                    setZoomLevel(1.01*m_iZS.manhattanLength()/m_nZS.manhattanLength(), true);
-                    std::cout<<"Zooming OUT"<<m_iZS.manhattanLength()/m_nZS.manhattanLength()*100<<std::endl;
+                    zooming=false;
+                    std::cout<<"zooming stopped by 1 of 2 UP (or 2 up)"<<std::endl;
+                    m_trackball->release(pixelPosToViewPos(localPosCam), m_MatrixArtefact);
                 }
-                //reset initial zoom separation
-                m_iZS=m_nZS;
-            }
-            //zooming ends if one finger goes up
-            if(zooming&&pFrame.pf_moving_point_array[0].point_event==TP_UP
-                    ||pFrame.pf_moving_point_array[1].point_event==TP_UP)
-            {
-                zooming=false;
-                std::cout<<"zooming stopped by 1 of 2 UP (or 2 up)"<<std::endl;
-                m_trackball->release(pixelPosToViewPos(localPosCam), m_MatrixArtefact);
-            }
             }
 
         }else{
-//on third finger down, initialize trackball movement in middle point of all fingers and stop zooming
-//the movement slows down when more fingers are on the screen.
+            //on third finger down, initialize trackball movement in middle point of all fingers and stop zooming
+            //the movement slows down when more fingers are on the screen.
             if(pFrame.pf_moving_point_array[0].point_event==TP_DOWN||
                     pFrame.pf_moving_point_array[1].point_event==TP_DOWN||
                     pFrame.pf_moving_point_array[2].point_event==TP_DOWN){
@@ -1185,7 +1372,7 @@ void AVGLWidget::catchPF(AVPointFrame pFrame)
                 if(pFrame.pf_moving_point_array[1].point_event==TP_MOVE){
                     AVTouchPoint e;
                     e.point_event=TP_MOVE;e.x=0;e.y=0;e.dx=0;e.dy=0;
-                    slower++;
+                    m_slowDownTrackball++;
                     for(int i = 0; i < pFrame.pf_moving_point_count; ++ i){
                         TouchPoint tp = pFrame.pf_moving_point_array[i];
                         e.id=tp.id;e.x+=tp.x;e.y+=tp.y;e.dx+=tp.dx;e.dy+=tp.dy;
@@ -1194,7 +1381,7 @@ void AVGLWidget::catchPF(AVPointFrame pFrame)
                     e.y=(int)e.y/pFrame.pf_moving_point_count;
                     e.dx=(unsigned short)e.dx/pFrame.pf_moving_point_count;
                     e.dy=(unsigned short)e.dy/pFrame.pf_moving_point_count;
-                    if(slower%pFrame.pf_moving_point_count==0)
+                    if(m_slowDownTrackball%pFrame.pf_moving_point_count==0)
                         catchEvent(e);//call event switch case calls move trackball
                 }
                 else{
@@ -1576,20 +1763,20 @@ QPointF AVGLWidget::pixelPosToViewPos(const QPointF& p)
 }
 
 
-//! Returnes the current mvpMatrix
+//! Returns the current mvpMatrix
 QMatrix4x4 AVGLWidget::getMvpMatrix()
 {
     return m_pMatrix * m_vMatrix * m_MatrixArtefact;
 }
 
-//! Returnes the current LeftMvpMatrix
+//! Returns the current LeftMvpMatrix
 QMatrix4x4 AVGLWidget::getLeftMvpMatrix()
 {
     return m_pMatrix * m_LeftVMatrix * m_MatrixArtefact;
 }
 
 
-//! Returnes the current RightMvpMatrix
+//! Returns the current RightMvpMatrix
 QMatrix4x4 AVGLWidget::getRightMvpMatrix()
 {
     return m_pMatrix * m_RightVMatrix * m_MatrixArtefact;

@@ -20,7 +20,6 @@ AVController::AVController()
     m_mainWindow = AVMainWindow::instance();
     m_glWidget = new AVGLWidget(m_mainWindow);
     m_pqReader= AVPQReader::instance();
-    m_Kinector= AVKinector::instance();
     int err_code=m_pqReader->Init();
     std::cout<<"We started the PQReader, the initialization code is "<<err_code<<std::endl;
     m_glWidget->setFocusPolicy(Qt::StrongFocus);
@@ -50,10 +49,20 @@ AVController::AVController()
 
     qRegisterMetaType<AVHand>("AVHand");
 
+//    m_Kinector= AVKinector::instance();
+
+
+//    WorkerThread *workerThread = new WorkerThread(this);
+//        connect(workerThread, SIGNAL(resultReady(QString)), this, SLOT(handleResults(QString)));
+//        connect(workerThread, SIGNAL(finished()), workerThread, SLOT(deleteLater()));
+//        workerThread->start();
+
+    AVKinector *m_Kinector = new AVKinector(m_glWidget);
+    int kinerror=m_Kinector->Init();
+    std::cout<<"We started the Kinector, the initialization code is "<<kinerror<<std::endl;
     QObject::connect(m_Kinector,SIGNAL(throwKP(AVHand)),
                      m_glWidget,SLOT(catchKP(AVHand)));
-
-    std::cout<<"connected SigSlot"<<std::endl;
+    m_Kinector->start();
 }
 
 

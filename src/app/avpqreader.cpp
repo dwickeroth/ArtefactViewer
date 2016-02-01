@@ -30,7 +30,7 @@ AVPQReader::~AVPQReader()
 /////////////////////////// functions ///////////////////////////////////
 int AVPQReader::Init()
 {
-    QThread::currentThread()->setPriority(QThread::LowestPriority);
+//    QThread::currentThread()->setPriority(QThread::LowestPriority);
     int err_code = PQMTE_SUCCESS;
     // initialize the handle functions of gestures;
     //    InitFuncOnTG();
@@ -101,26 +101,6 @@ void AVPQReader:: OnReceivePointFrame(int frame_id, int time_stamp, int moving_p
     if(counter%moveResolution==0||pf.pf_moving_point_array[0].point_event==TP_DOWN||pf.pf_moving_point_array[0].point_event==TP_UP)
     {
         m_instance->OnTouchPoint(pf);
-
-//        for(int i = 0; i < moving_point_count; ++ i){
-//            switch(moving_point_array[i].point_event){
-//            case TP_DOWN:
-//                std::cout<<(int) moving_point_array[i].point_event<<"Means touch"<<std::endl;
-//                break;
-//            case TP_MOVE:
-//                std::cout<<(int) moving_point_array[i].point_event<<"Means move"
-//                         <<" at ("<<(int) moving_point_array[i].x
-//                        <<" , "<<(int) moving_point_array[i].y
-//                       <<")."
-//                      <<std::endl;
-//                break;
-//            case TP_UP:
-//                std::cout<<(int) moving_point_array[i].point_event<<"Means left"<<std::endl;
-//                break;
-//            }
-//                    std::cout<<(int) moving_point_array[i].point_event<<std::endl;
-//        }
-
     }
     counter++;
 }
@@ -168,8 +148,7 @@ void AVPQReader::OnGetDeviceInfo(const TouchDeviceInfo & deviceinfo,void *call_b
 }
 // here, just record the position of point,
 //	you can do mouse map like "OnTG_Down" etc;
-void AVPQReader:: OnTouchPoint(const AVPointFrame & pf
-                               )
+void AVPQReader:: OnTouchPoint(const AVPointFrame & pf)
 {
     AVPointFrame pFrame;
     pFrame.pf_frame_id=pf.pf_frame_id;

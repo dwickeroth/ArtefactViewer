@@ -5,20 +5,27 @@
 #include "avhand.h"
 using namespace std;
 
-AVKinector* AVKinector::m_instance = 0;
-
+//AVKinector* AVKinector::m_instance = 0;
+int kinerror=0;
 AVKinector::AVKinector(QObject *parent)
 {
     m_activated=true;
-    InitializeDefaultSensor();
-    cout<<"AVKinector on"<<endl;
+//    InitializeDefaultSensor();
+    cout<<"AVKinector on, setting priority to lowest"<<endl;
+    QThread::currentThread()->setPriority(QThread::LowestPriority);
+//    run();
+//    cout<<"requested first run from initialization"<<endl;
 }
 AVKinector::~AVKinector()
 {
-
     cout<<"AVKinector off"<<endl;
 }
 
+int AVKinector::Init(){
+    InitializeDefaultSensor();
+    moveToThread(this);
+    return kinerror;
+}
 
 HRESULT AVKinector::InitializeDefaultSensor()
 {
@@ -41,27 +48,26 @@ HRESULT AVKinector::InitializeDefaultSensor()
 
         if (SUCCEEDED(hr))
         {
+            cout<<"kinect sensor is open"<<endl;
             hr = m_pKinectSensor->get_CoordinateMapper(&m_pCoordinateMapper);
-            cout<<"got coordinate mapper"<<endl;
-
         }
 
         if (SUCCEEDED(hr))
         {
+            cout<<"got coordinate mapper"<<endl;
+
             hr = m_pKinectSensor->get_BodyFrameSource(&pBodyFrameSource);
-            cout<<"got Frame source"<<endl;
             if(SUCCEEDED(pBodyFrameSource->get_IsActive(&active)))
-                cout<<"is active"<<endl;
+                cout<<"Frame source is active"<<endl;
             if(SUCCEEDED(pBodyFrameSource->get_BodyCount(&count)))
-                    cout<<"body count is "<<(int)count<<endl;
+                cout<<"body count is "<<(int)count<<endl;
         }
 
         if (SUCCEEDED(hr))
         {
             hr = pBodyFrameSource->OpenReader(&m_pBodyFrameReader);
-            cout<<"reader is open"<<endl;
             if(SUCCEEDED(m_pBodyFrameReader->put_IsPaused(false)))
-            cout<<"is not paused"<<endl;
+            cout<<"Body Frame reader is open and unpaused"<<endl;
         }
 
     }
@@ -71,50 +77,46 @@ HRESULT AVKinector::InitializeDefaultSensor()
         cout<<"No ready Kinect found!"<<endl;
         return E_FAIL;
     }
-    if (m_activated)
-    {
-        Update();
-        threader();
-        cout<<"updating from while"<<endl;
-    }
     return hr;
-
-
 }
 
-void AVKinector::threader(){
+void AVKinector::run(){
+
     while (m_pBodyFrameReader)
     {
     AVKinector::Update();
-    }
 
+//    cout<<"update over, call exec"<<exec()<<endl;
+//    return;
+    }
+    exec();
 }
 
 void AVKinector::Update()
 {
+//    cout<<"kinector running"<<endl;
     if (!m_pBodyFrameReader)
     {
     cout<<"no body frame reader"<<endl;
+    return;
     }
 
     IBodyFrame* pBodyFrame = NULL;
-    IBody* bodies;
-    HandState status;
 
     HRESULT hr = m_pBodyFrameReader->AcquireLatestFrame(&pBodyFrame);
-
+//    cout<<"body frame requested"<<endl;
     if (SUCCEEDED(hr))
     {
+//        cout<<"body frame acquired"<<endl;
         INT64 nTime = 0;
 
         hr = pBodyFrame->get_RelativeTime(&nTime);
 
         IBody* ppBodies[BODY_COUNT] = {0};
-//        cout<<"body created"<<endl;
         if (SUCCEEDED(hr))
         {
+//            cout<<"body created, get and refreshed body data"<<endl;
             hr = pBodyFrame->GetAndRefreshBodyData(_countof(ppBodies), ppBodies);
-//            cout<<"got and refreshed body data"<<endl;
         }
 
         if (SUCCEEDED(hr))
@@ -128,8 +130,9 @@ void AVKinector::Update()
             SafeRelease(ppBodies[i]);
         }
     }
-
+//else{cout<<"body frame NOT acquired"<<endl;}
     SafeRelease(pBodyFrame);
+
 }
 
 
@@ -144,7 +147,8 @@ void AVKinector::ProcessBody(INT64 nTime, int nBodyCount, IBody** ppBodies)
                 IBody* pBody = ppBodies[i];
                 if (pBody)
                 {
-//                    cout<<"body is there"<<endl;
+//                        cout<<"we have a body"<<endl;
+
                     BOOLEAN bTracked = false;
                     hr = pBody->get_IsTracked(&bTracked);
 
@@ -178,32 +182,33 @@ void AVKinector::ProcessBody(INT64 nTime, int nBodyCount, IBody** ppBodies)
                             der.y=joints[JointType_HandRight].Position.Y;
                             der.z=joints[JointType_HandRight].Position.Z;
                             emit throwKP(der);
-                           if(leftHandState==2)
-                               cout<<"left hand is open at"
-                                   <<joints[JointType_HandLeft].Position.X
-                                   <<joints[JointType_HandLeft].Position.Y
-                                   <<joints[JointType_HandLeft].Position.Z
-                                    <<endl;
-                           if(leftHandState==3)
-                               cout<<"left hand is closed at"
-                                   <<joints[JointType_HandLeft].Position.X
-                                   <<joints[JointType_HandLeft].Position.Y
-                                   <<joints[JointType_HandLeft].Position.Z
-                                    <<endl;
 
-                            if(rightHandState==2)
-                               cout<<"right hand is open at"
-                                   <<joints[JointType_HandRight].Position.X
-                                   <<joints[JointType_HandRight].Position.Y
-                                   <<joints[JointType_HandRight].Position.Z
-                                    <<endl;
+//                           if(leftHandState==2)
+//                               cout<<"left hand is open at"
+//                                   <<joints[JointType_HandLeft].Position.X
+//                                   <<joints[JointType_HandLeft].Position.Y
+//                                   <<joints[JointType_HandLeft].Position.Z
+//                                    <<endl;
+//                           if(leftHandState==3)
+//                               cout<<"left hand is closed at"
+//                                   <<joints[JointType_HandLeft].Position.X
+//                                   <<joints[JointType_HandLeft].Position.Y
+//                                   <<joints[JointType_HandLeft].Position.Z
+//                                    <<endl;
 
-                            if(rightHandState==3)
-                               cout<<"right hand is closed at"
-                                   <<joints[JointType_HandRight].Position.X
-                                   <<joints[JointType_HandRight].Position.Y
-                                   <<joints[JointType_HandRight].Position.Z
-                                    <<endl;
+//                            if(rightHandState==2)
+//                               cout<<"right hand is open at"
+//                                   <<joints[JointType_HandRight].Position.X
+//                                   <<joints[JointType_HandRight].Position.Y
+//                                   <<joints[JointType_HandRight].Position.Z
+//                                    <<endl;
+
+//                            if(rightHandState==3)
+//                               cout<<"right hand is closed at"
+//                                   <<joints[JointType_HandRight].Position.X
+//                                   <<joints[JointType_HandRight].Position.Y
+//                                   <<joints[JointType_HandRight].Position.Z
+//                                    <<endl;
                         }
 //                        if (SUCCEEDED(hr))
 //                        {
@@ -261,5 +266,6 @@ void AVKinector::ProcessBody(INT64 nTime, int nBodyCount, IBody** ppBodies)
             m_nLastCounter = qpcNow.QuadPart;
             m_nFramesSinceUpdate = 0;
 //        }
+            return;
 
 }
