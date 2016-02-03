@@ -7,12 +7,13 @@ using namespace std;
 
 //AVKinector* AVKinector::m_instance = 0;
 int kinerror=0;
+int counters=0;
 AVKinector::AVKinector(QObject *parent)
 {
     m_activated=true;
 //    InitializeDefaultSensor();
     cout<<"AVKinector on, setting priority to lowest"<<endl;
-    QThread::currentThread()->setPriority(QThread::LowestPriority);
+//    QThread::currentThread()->setPriority(QThread::LowestPriority);
 //    run();
 //    cout<<"requested first run from initialization"<<endl;
 }
@@ -167,12 +168,14 @@ void AVKinector::ProcessBody(INT64 nTime, int nBodyCount, IBody** ppBodies)
 
                         hr = pBody->GetJoints(_countof(joints), joints);
                         if(SUCCEEDED(hr)){
+                            counters++;
                             AVHand izq;
                             izq.isLeft=true;
                             izq.hState=leftHandState;
                             izq.x=joints[JointType_HandLeft].Position.X;
                             izq.y=joints[JointType_HandLeft].Position.Y;
                             izq.z=joints[JointType_HandLeft].Position.Z;
+                            if(counters%3==0)
                             emit throwKP(izq);
 
                             AVHand der;
@@ -181,6 +184,7 @@ void AVKinector::ProcessBody(INT64 nTime, int nBodyCount, IBody** ppBodies)
                             der.x=joints[JointType_HandRight].Position.X;
                             der.y=joints[JointType_HandRight].Position.Y;
                             der.z=joints[JointType_HandRight].Position.Z;
+                            if(counters%3==0)
                             emit throwKP(der);
 
 //                           if(leftHandState==2)

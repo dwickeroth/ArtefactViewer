@@ -193,9 +193,10 @@ private:
     QVector4D   m_kNewTr;//! Kinect Translation update point
     QVector4D   m_kResTr;//! Kinect Translation result
 
-    QVector4D   m_kInitialRot; //!Kinect Rotation start point
-    QVector4D   m_kNewRot;  //!Kinect Rotation update point
-    QVector4D   m_kResRot;//! Kinect Translation result
+    QVector4D   m_kNewLeftRot;  //!Kinect Rotation update point
+    QVector4D   m_kOldLeftRot;  //!Kinect Rotation start point
+    QVector4D   m_kNewRightRot;  //!Kinect Rotation update point
+    QVector4D   m_kOldRightRot;  //!Kinect Rotation start point
 
 
     //private members without getters/setters

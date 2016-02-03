@@ -39,6 +39,7 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 #include "kinect.h"
 
 using namespace std;
+int lesstext=0;
 
 AVGLWidget::AVGLWidget(QWidget *parent) : QGLWidget(QGLFormat(QGL::SampleBuffers), parent)
 {
@@ -1002,7 +1003,7 @@ void AVGLWidget::catchKP(AVHand mano)
     //    cout<<"Left Open "<<m_kLOC<<", Right Open "<<m_kROC<<", Left Closed "<<m_kLCC<<", Right Closed "<<m_kRCC
     //        <<", LUK "<<m_kLUC<<", RUK "<<m_kRUC<<", LNT "<<m_kLNTC<<", RNT "<<m_kRNTC<<endl;
     //!if both hands have been open for more than 3 seconds, kinect starts watching
-    if(m_kLOC>50&&m_kROC>50&&m_kinectIsWatching==false){
+    if(m_kLOC>10&&m_kROC>10&&m_kinectIsWatching==false){
         cout<<"Started reading"<<endl;
         m_kinectIsWatching=true;
         return;
@@ -1010,7 +1011,7 @@ void AVGLWidget::catchKP(AVHand mano)
 
     //!if translation is off and kinect is watching and the signal is from the left hand, we begin to translate with left.
 
-    if( !m_kLTr&&(m_kinectIsWatching&&(m_kLCC==50&&m_kROC>50))&&mano.isLeft)
+    if( !m_kLTr&&(m_kinectIsWatching&&(m_kLCC==10&&m_kROC>10))&&mano.isLeft)
     {
         m_kLTr=true;
 
@@ -1023,7 +1024,7 @@ void AVGLWidget::catchKP(AVHand mano)
         <<endl;    }
     //!if translation is off and kinect is watching and the signal is from the right hand, we begin to translate with right.
 
-    if( !m_kRTr&&(m_kinectIsWatching&&((m_kLOC>50&&m_kRCC==50)&&!mano.isLeft)))
+    if( !m_kRTr&&(m_kinectIsWatching&&((m_kLOC>2&&m_kRCC==50)&&!mano.isLeft)))
     {
         m_kRTr=true;
         m_kInitialTr= QVector4D((qreal)-mano.x,(qreal)-mano.z,(qreal)mano.y, 1);
@@ -1034,24 +1035,31 @@ void AVGLWidget::catchKP(AVHand mano)
         <<endl;
     }
 
-    //!if kinect is watching and left translation is on and the signal is from the left hand, we translate with left.
+    //!if kinect is watching and left (projection) translation is on and the signal is from the left hand, we translate with left.
 
     if(m_kinectIsWatching&&m_kLTr&&mano.isLeft)
     {
-        //        m_kNewTr= QVector4D((qreal)-mano.x,(qreal)mano.y,(qreal)mano.z, 1);
-        m_kNewTr= QVector4D((qreal)-mano.x,(qreal)-mano.z,(qreal)mano.y, 1);
-        m_kResTr=1000*(m_kInitialTr-m_kNewTr);
+        //vertical screen
+//                m_kNewTr= QVector4D((qreal)-mano.x,(qreal)mano.y,(qreal)mano.z, 1);
+        //! For horizontal screen, y and z coordinates are swapped
+        m_kNewTr= QVector4D((qreal)-mano.x,(qreal)mano.z,(qreal)-mano.y, 1);
+        m_kResTr=500*(m_kInitialTr-m_kNewTr);
+        if(lesstext%100==0)
         cout<<"Translating with left! moved by( "
            <<m_kResTr.x()<<" , "
           <<m_kResTr.y()<<" , "
          <<m_kResTr.z()<<") "
         <<endl;
-        if(m_kResTr.x()<10&&m_kResTr.y()<10&&m_kResTr.z()<10){
-            m_MatrixArtefact.translate(m_kResTr.toVector3D());
-            //        m_vMatrix.translate(m_kResTr.toVector3D());
-            //        m_pMatrix.translate(m_kResTr.toVector3D());
+        if(abs(m_kResTr.x())<100&&abs(m_kResTr.y())<100&&abs(m_kResTr.z())<100){
+//            m_MatrixArtefact.translate(m_kResTr.toVector3D());
+            if(lesstext%10==0)
+                    m_vMatrix.translate(m_kResTr.toVector3D());
+//                    m_LeftVMatrix.translate(m_kResTr.toVector3D());
+//                    m_RightVMatrix.translate(m_kResTr.toVector3D());
+            if(lesstext%10==0)
+                    m_pMatrix.translate(m_kResTr.toVector3D());
         }
-
+//        if(lesstext%10==0)
         updateGL();
         m_kInitialTr=m_kNewTr;
         if(m_kROC==0||m_kLCC==0)
@@ -1061,24 +1069,29 @@ void AVGLWidget::catchKP(AVHand mano)
         }
     }
 
-    //!if kinect is watching and right translation is on and the signal is from the right hand, we translate with right.
+    //!if kinect is watching and right (artefact) translation is on and the signal is from the right hand, we translate with right.
 
     if(m_kinectIsWatching&&m_kRTr&&!mano.isLeft)
     {
-        //        m_kNewTr= QVector4D((qreal)-mano.x,(qreal)mano.y,(qreal)mano.z, 1);
+        //vertical screen
+//                m_kNewTr= QVector4D((qreal)-mano.x,(qreal)mano.y,(qreal)mano.z, 1);
+        //! For horizontal screen, y and z coordinates are swapped
         m_kNewTr= QVector4D((qreal)-mano.x,(qreal)-mano.z,(qreal)mano.y, 1);
-        m_kResTr=1000*(m_kInitialTr-m_kNewTr);
+        m_kResTr=500*(m_kInitialTr-m_kNewTr);
+        if(lesstext%100==0)
         cout<<"Translating with right! moved by ("
            <<m_kResTr.x()<<" , "
           <<m_kResTr.y()<<" , "
          <<m_kResTr.z()<<") "
         <<endl;
-        if(m_kResTr.x()<10&&m_kResTr.y()<10&&m_kResTr.z()<10){
+        if(abs(m_kResTr.x())<10&&abs(m_kResTr.y())<10&&abs(m_kResTr.z())<10){
             m_MatrixArtefact.translate(m_kResTr.toVector3D());
-            //        m_vMatrix.translate(m_kResTr.toVector3D());
-            //        m_pMatrix.translate(m_kResTr.toVector3D());
-        }
+//            m_vMatrix.translate(m_MatrixArtefact.inverted()*m_kResTr.toVector3D());
+//            m_LeftVMatrix.translate(m_MatrixArtefact.inverted()*m_kResTr.toVector3D());
+//            m_RightVMatrix.translate(m_MatrixArtefact.inverted()*m_kResTr.toVector3D());
+//            m_pMatrix.translate(m_MatrixArtefact.inverted()*m_vMatrix.inverted()*m_kResTr.toVector3D());
 
+        }
         updateGL();
         m_kInitialTr=m_kNewTr;
         if(m_kLOC==0||m_kRCC==0)
@@ -1093,23 +1106,44 @@ void AVGLWidget::catchKP(AVHand mano)
     if(!m_kRot&&m_kinectIsWatching&&((m_kLCC>50&&m_kRCC==50)||(m_kLCC==50&&m_kRCC>50)))
     {
         m_kRTr=false;
-        m_kLTr=false;
         m_kRot=true;
-        m_kInitialRot=QVector4D((qreal)mano.x,(qreal)mano.y,(qreal)mano.z, 1);
-        cout<<"stopped translation and began rotation with right hand at "
-           <<m_kResTr.x()<<" , "
-          <<m_kResTr.y()<<" , "
-         <<m_kResTr.z()<<") "
-        <<endl;
+        m_kLTr=false;
+        if(mano.isLeft){
+            m_kOldLeftRot=QVector4D((qreal)mano.x,(qreal)mano.y,(qreal)mano.z, 1);
+        }
+        if(!mano.isLeft){
+            m_kOldRightRot=QVector4D((qreal)mano.x,(qreal)mano.y,(qreal)mano.z, 1);
+        }
+        cout<<"stopped translation and began rotation";
+    }
+
+    if(m_kRot){
+        //we refresh hand positions
+        if(!mano.isLeft)
+            m_kOldRightRot=QVector4D((qreal)mano.x,(qreal)mano.y,(qreal)mano.z, 1);
+        if(mano.isLeft)
+            m_kOldLeftRot=QVector4D((qreal)mano.x,(qreal)mano.y,(qreal)mano.z, 1);
+        cout<<"rotating"<<endl;
+        updateGL();
+
+        if(m_kLCC==0||m_kRCC==0)
+        {
+            m_kRot=false;
+            cout<<"stopped rotating"<<endl;
+        }
+
     }
 
     if(m_kLNTC>50&&m_kRNTC>50){
+        if(lesstext%1000==0)
         cout<<"Stopped reading, both hands untracked for more than 3s"<<endl;
         m_kinectIsWatching=false;
         m_kLNTC=0;
         m_kRNTC=0;
     }
     if(m_kLUC>5000||m_kRUC>5000||m_kLNTC>5000||m_kRNTC>5000){
+        lesstext++;
+        if(lesstext%100==0)
         cout<<"Stopped reading, one or more hands were unrecognized or unknown for about 30s"<<endl;
         m_kinectIsWatching=false;
         m_kLNTC=0;
@@ -1212,11 +1246,11 @@ void AVGLWidget::catchPF(AVPointFrame pFrame)
         screenPosCam.setY((qreal)pFrame.pf_moving_point_array[0].y);
         localPosCam=this->mapFromGlobal(screenPosCam.toPoint());
         //if the program thinks that it is on a different screen than the touchpoint, this corrects the dislocation
-        if(QApplication::desktop()->screenNumber(this)!=QApplication::desktop()->screenNumber(screenPosCam.toPoint()))
-        {
-            QPoint displasia;displasia.setX(QApplication::desktop()->screenGeometry(this).width());
-            localPosCam=displasia+localPosCam;
-        }
+//        if(QApplication::desktop()->screenNumber(this)!=QApplication::desktop()->screenNumber(screenPosCam.toPoint()))
+//        {
+//            QPoint displasia;displasia.setX(QApplication::desktop()->screenGeometry(this).width());
+//            localPosCam=displasia+localPosCam;
+//        }
         //        uncomment to tune this dislocation patch
         //        std::cout << "local pos cam: " << localPosCam.x() << " " << localPosCam.y()
         //                  << " Widget dimensions" << height() << " " << width()
