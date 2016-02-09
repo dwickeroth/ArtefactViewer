@@ -30,7 +30,8 @@ SOURCES +=\
     AVKinector.cpp \
     AVPQReader.cpp \
     BodyBasics.cpp \
-    Kinector.cpp
+    Kinector.cpp \
+    avmainwindow.cpp
 
 HEADERS  += avmainwindow.h \
     avcontroller.h \

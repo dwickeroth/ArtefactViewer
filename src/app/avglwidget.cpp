@@ -26,7 +26,7 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 #include <QDebug>
 #include <QWheelEvent>
 #include <QDesktopWidget>
-
+#define PI 3.14159265
 #include "math.h"
 #include "AVKinector.h"
 #include "avmodel.h"
@@ -58,9 +58,12 @@ AVGLWidget::AVGLWidget(QWidget *parent) : QGLWidget(QGLFormat(QGL::SampleBuffers
     m_trackball = new AVTrackBall(AVTrackBall::Sphere);
     m_slowDownTrackball=0;
     zooming=false;
+    rotating=false;
     m_kLTr=false;
     m_kRTr=false;
     m_kRot=false;
+    lRotInit=false;
+    rRotInit=false;
     m_kLUC=0;
     m_kLNTC=0;
     m_kRUC=0;
@@ -179,8 +182,8 @@ QImage AVGLWidget::renderToOffscreenBuffer(int width, int height)
     // Select back right buffer
     glDrawBuffer(GL_BACK_RIGHT);
     //UNSURE: uncomment if offscreen buffer is not shown in stereo
-    //    if(formato.stereo()){std::cout << "it's on for offscreen right!" << std::endl;}
-    //    else{std::cout << "it's OFF for offscreen right!" << std::endl;}
+    //    if(formato.stereo()){cout << "it's on for offscreen right!" << endl;}
+    //    else{cout << "it's OFF for offscreen right!" << endl;}
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     drawBackground();
     setupCamera(false);
@@ -486,7 +489,7 @@ void AVGLWidget::paintGL()
 
     //    uncomment to check if we accept Touch Events by painting
     //    boolean DoWe=this->testAttribute(Qt::WA_AcceptTouchEvents);
-    //    if(DoWe){std::cout << "we do!" << std::endl;}
+    //    if(DoWe){cout << "we do!" << endl;}
 
     // Select back left buffer
     glDrawBuffer(GL_BACK_LEFT);
@@ -530,7 +533,7 @@ void AVGLWidget::paintGL()
     // Set up the camera/view
     setupCamera(false);
     //uncomment to check if stereo is on
-    //    if(formato.stereo()){std::cout << "On your right!" << std::endl;}
+    //    if(formato.stereo()){cout << "On your right!" << endl;}
 
     glEnable(GL_DEPTH_TEST);
     if (m_lighting) // Shading with lighting
@@ -994,16 +997,12 @@ void AVGLWidget::drawOverlays(QPaintDevice *device, bool offscreen, int fboWidth
 
 
 
-
-
-
-
 void AVGLWidget::catchKP(AVHand mano)
 {
     //    cout<<"Left Open "<<m_kLOC<<", Right Open "<<m_kROC<<", Left Closed "<<m_kLCC<<", Right Closed "<<m_kRCC
     //        <<", LUK "<<m_kLUC<<", RUK "<<m_kRUC<<", LNT "<<m_kLNTC<<", RNT "<<m_kRNTC<<endl;
     //!if both hands have been open for more than 3 seconds, kinect starts watching
-    if(m_kLOC>10&&m_kROC>10&&m_kinectIsWatching==false){
+    if(m_kLOC>10&&m_kROC>10&&!m_kinectIsWatching){
         cout<<"Started reading"<<endl;
         m_kinectIsWatching=true;
         return;
@@ -1011,7 +1010,7 @@ void AVGLWidget::catchKP(AVHand mano)
 
     //!if translation is off and kinect is watching and the signal is from the left hand, we begin to translate with left.
 
-    if( !m_kLTr&&(m_kinectIsWatching&&(m_kLCC==10&&m_kROC>10))&&mano.isLeft)
+    if( !m_kLTr&&(m_kinectIsWatching&&(m_kLCC==5&&m_kROC>5))&&mano.isLeft)
     {
         m_kLTr=true;
 
@@ -1024,7 +1023,7 @@ void AVGLWidget::catchKP(AVHand mano)
         <<endl;    }
     //!if translation is off and kinect is watching and the signal is from the right hand, we begin to translate with right.
 
-    if( !m_kRTr&&(m_kinectIsWatching&&((m_kLOC>2&&m_kRCC==50)&&!mano.isLeft)))
+    if( !m_kRTr&&(m_kinectIsWatching&&((m_kLOC>5&&m_kRCC==5)&&!mano.isLeft)))
     {
         m_kRTr=true;
         m_kInitialTr= QVector4D((qreal)-mano.x,(qreal)-mano.z,(qreal)mano.y, 1);
@@ -1040,26 +1039,26 @@ void AVGLWidget::catchKP(AVHand mano)
     if(m_kinectIsWatching&&m_kLTr&&mano.isLeft)
     {
         //vertical screen
-//                m_kNewTr= QVector4D((qreal)-mano.x,(qreal)mano.y,(qreal)mano.z, 1);
-        //! For horizontal screen, y and z coordinates are swapped
+        //                m_kNewTr= QVector4D((qreal)-mano.x,(qreal)mano.y,(qreal)mano.z, 1);
+        //For horizontal screen, y and z coordinates are swapped
         m_kNewTr= QVector4D((qreal)-mano.x,(qreal)mano.z,(qreal)-mano.y, 1);
         m_kResTr=500*(m_kInitialTr-m_kNewTr);
-        if(lesstext%100==0)
-        cout<<"Translating with left! moved by( "
-           <<m_kResTr.x()<<" , "
-          <<m_kResTr.y()<<" , "
-         <<m_kResTr.z()<<") "
-        <<endl;
+        if(lesstext%500==0)
+            cout<<"Translating with left! moved by( "
+               <<m_kResTr.x()<<" , "
+              <<m_kResTr.y()<<" , "
+             <<m_kResTr.z()<<") "
+            <<endl;
         if(abs(m_kResTr.x())<100&&abs(m_kResTr.y())<100&&abs(m_kResTr.z())<100){
-//            m_MatrixArtefact.translate(m_kResTr.toVector3D());
+            //            m_MatrixArtefact.translate(m_kResTr.toVector3D());
             if(lesstext%10==0)
-                    m_vMatrix.translate(m_kResTr.toVector3D());
-//                    m_LeftVMatrix.translate(m_kResTr.toVector3D());
-//                    m_RightVMatrix.translate(m_kResTr.toVector3D());
+                m_vMatrix.translate(m_kResTr.toVector3D());
+            //                    m_LeftVMatrix.translate(m_kResTr.toVector3D());
+            //                    m_RightVMatrix.translate(m_kResTr.toVector3D());
             if(lesstext%10==0)
-                    m_pMatrix.translate(m_kResTr.toVector3D());
+                m_pMatrix.translate(m_kResTr.toVector3D());
         }
-//        if(lesstext%10==0)
+        //        if(lesstext%10==0)
         updateGL();
         m_kInitialTr=m_kNewTr;
         if(m_kROC==0||m_kLCC==0)
@@ -1074,22 +1073,22 @@ void AVGLWidget::catchKP(AVHand mano)
     if(m_kinectIsWatching&&m_kRTr&&!mano.isLeft)
     {
         //vertical screen
-//                m_kNewTr= QVector4D((qreal)-mano.x,(qreal)mano.y,(qreal)mano.z, 1);
+        //                m_kNewTr= QVector4D((qreal)-mano.x,(qreal)mano.y,(qreal)mano.z, 1);
         //! For horizontal screen, y and z coordinates are swapped
         m_kNewTr= QVector4D((qreal)-mano.x,(qreal)-mano.z,(qreal)mano.y, 1);
         m_kResTr=500*(m_kInitialTr-m_kNewTr);
-        if(lesstext%100==0)
-        cout<<"Translating with right! moved by ("
-           <<m_kResTr.x()<<" , "
-          <<m_kResTr.y()<<" , "
-         <<m_kResTr.z()<<") "
-        <<endl;
+        if(lesstext%500==0)
+            cout<<"Translating with right! moved by ("
+               <<m_kResTr.x()<<" , "
+              <<m_kResTr.y()<<" , "
+             <<m_kResTr.z()<<") "
+            <<endl;
         if(abs(m_kResTr.x())<10&&abs(m_kResTr.y())<10&&abs(m_kResTr.z())<10){
             m_MatrixArtefact.translate(m_kResTr.toVector3D());
-//            m_vMatrix.translate(m_MatrixArtefact.inverted()*m_kResTr.toVector3D());
-//            m_LeftVMatrix.translate(m_MatrixArtefact.inverted()*m_kResTr.toVector3D());
-//            m_RightVMatrix.translate(m_MatrixArtefact.inverted()*m_kResTr.toVector3D());
-//            m_pMatrix.translate(m_MatrixArtefact.inverted()*m_vMatrix.inverted()*m_kResTr.toVector3D());
+            //            m_vMatrix.translate(m_MatrixArtefact.inverted()*m_kResTr.toVector3D());
+            //            m_LeftVMatrix.translate(m_MatrixArtefact.inverted()*m_kResTr.toVector3D());
+            //            m_RightVMatrix.translate(m_MatrixArtefact.inverted()*m_kResTr.toVector3D());
+            //            m_pMatrix.translate(m_MatrixArtefact.inverted()*m_vMatrix.inverted()*m_kResTr.toVector3D());
 
         }
         updateGL();
@@ -1101,34 +1100,75 @@ void AVGLWidget::catchKP(AVHand mano)
         }
     }
 
-
-
-    if(!m_kRot&&m_kinectIsWatching&&((m_kLCC>50&&m_kRCC==50)||(m_kLCC==50&&m_kRCC>50)))
+    //!3D Rotation with kinect
+    if(!m_kRot&&m_kinectIsWatching&&((m_kLCC>5&&m_kRCC==5)||(m_kLCC==5&&m_kRCC>5)))
     {
         m_kRTr=false;
-        m_kRot=true;
         m_kLTr=false;
         if(mano.isLeft){
-            m_kOldLeftRot=QVector4D((qreal)mano.x,(qreal)mano.y,(qreal)mano.z, 1);
+            m_kNewLeftRot=QVector3D((qreal)mano.x,(qreal)mano.y,(qreal)mano.z);
+            m_kOldLeftRot=m_kNewLeftRot;
+            lRotInit=true;
+            m_kRCC=0;
         }
         if(!mano.isLeft){
-            m_kOldRightRot=QVector4D((qreal)mano.x,(qreal)mano.y,(qreal)mano.z, 1);
+            m_kNewRightRot=QVector3D((qreal)mano.x,(qreal)mano.y,(qreal)mano.z);
+            m_kOldRightRot=m_kNewRightRot;
+            rRotInit=true;
         }
-        cout<<"stopped translation and began rotation";
+    }
+    //once the left and right rotation initial positions have been saved
+    if(lRotInit&&rRotInit&&!m_kRot)
+    {
+        m_kRot=true;
+        //draw the old line
+        m_kOldRotVec=m_kOldRightRot-m_kOldLeftRot;
+        lRotInit=false;
+        rRotInit=false;
+        cout<<"Initialized Rotating"<<endl;
     }
 
     if(m_kRot){
-        //we refresh hand positions
+
+        //refresh hand positions
         if(!mano.isLeft)
-            m_kOldRightRot=QVector4D((qreal)mano.x,(qreal)mano.y,(qreal)mano.z, 1);
+        {
+            m_kNewRightRot=QVector3D((qreal)mano.x,(qreal)mano.y,(qreal)mano.z);
+        }
         if(mano.isLeft)
-            m_kOldLeftRot=QVector4D((qreal)mano.x,(qreal)mano.y,(qreal)mano.z, 1);
-        cout<<"rotating"<<endl;
+        {
+            m_kNewLeftRot=QVector3D((qreal)mano.x,(qreal)mano.y,(qreal)mano.z);
+        }
+        //draw new rotation line
+        m_kNewRotVec=m_kNewRightRot-m_kNewLeftRot;
+        //rotate by axis and angle
+        if(acos(QVector3D::dotProduct(m_kOldRotVec.normalized(),m_kNewRotVec.normalized()))* 180.0 / PI>1)
+        {
+        m_MatrixArtefact.rotate(-acos(QVector3D::dotProduct(m_kOldRotVec.normalized(),m_kNewRotVec.normalized()))* 180.0f / PI,
+                                QVector3D::crossProduct(m_kOldRotVec.normalized(),m_kNewRotVec.normalized()));
+        }
+//        cout<<"rotating by "
+//           <<acos(QVector3D::dotProduct(m_kOldRotVec.normalized(),m_kNewRotVec.normalized()))* 180.0 / PI
+//            <<" around the axis: ("
+//            <<(QVector3D::crossProduct(m_kOldRotVec,m_kNewLeftRot)).x()<<" , "
+//           <<(QVector3D::crossProduct(m_kOldRotVec,m_kNewLeftRot)).y()<<" , "
+//          <<(QVector3D::crossProduct(m_kOldRotVec,m_kNewLeftRot)).z()<<" )."
+//             <<endl;
         updateGL();
+
+        m_kOldLeftRot=m_kNewLeftRot;
+        m_kOldRightRot=m_kNewRightRot;
+        m_kOldRotVec=m_kNewRotVec;
+
+
 
         if(m_kLCC==0||m_kRCC==0)
         {
             m_kRot=false;
+            m_kRTr=false;
+            m_kLTr=false;
+            lRotInit=false;
+            rRotInit=false;
             cout<<"stopped rotating"<<endl;
         }
 
@@ -1136,7 +1176,7 @@ void AVGLWidget::catchKP(AVHand mano)
 
     if(m_kLNTC>50&&m_kRNTC>50){
         if(lesstext%1000==0)
-        cout<<"Stopped reading, both hands untracked for more than 3s"<<endl;
+            cout<<"Stopped reading, both hands untracked for more than 10s"<<endl;
         m_kinectIsWatching=false;
         m_kLNTC=0;
         m_kRNTC=0;
@@ -1144,7 +1184,7 @@ void AVGLWidget::catchKP(AVHand mano)
     if(m_kLUC>5000||m_kRUC>5000||m_kLNTC>5000||m_kRNTC>5000){
         lesstext++;
         if(lesstext%100==0)
-        cout<<"Stopped reading, one or more hands were unrecognized or unknown for about 30s"<<endl;
+            cout<<"Stopped reading, one or more hands were unrecognized or unknown for about 30s"<<endl;
         m_kinectIsWatching=false;
         m_kLNTC=0;
         m_kRNTC=0;
@@ -1186,7 +1226,7 @@ void AVGLWidget::kinectCount(AVHand mano){
     }
     if(mano.hState==0&&mano.isLeft==false){
         //        cout<<"Right hand state is unknown since "<<m_kRUC<<endl;
-         m_kRUC++;
+        m_kRUC++;
     }
     if(mano.hState==1&&mano.isLeft==false){
         //        cout<<"Right hand not tracked since "<<m_kRNTC<<endl;
@@ -1229,6 +1269,7 @@ void AVGLWidget::resetRightKinectCounts(){
     m_kRLC=0;
 }
 
+
 /////////////////////////////////////////////////////////////////
 ///////////////////////////TOUCH EVENTS//////////////////////////
 /////////////////////////////////////////////////////////////////
@@ -1238,29 +1279,30 @@ void AVGLWidget::catchPF(AVPointFrame pFrame)
 
     QPointF screenPosCam;
     QPointF localPosCam;
-    //if there is one point, translation movement is called
+    //!if there is one point, translation movement is called
     if(pFrame.pf_moving_point_count==1)
     {
         //initialization and assignment of the finger position and mapping from global coordinates
         screenPosCam.setX((qreal)pFrame.pf_moving_point_array[0].x);
         screenPosCam.setY((qreal)pFrame.pf_moving_point_array[0].y);
         localPosCam=this->mapFromGlobal(screenPosCam.toPoint());
+
         //if the program thinks that it is on a different screen than the touchpoint, this corrects the dislocation
-//        if(QApplication::desktop()->screenNumber(this)!=QApplication::desktop()->screenNumber(screenPosCam.toPoint()))
-//        {
-//            QPoint displasia;displasia.setX(QApplication::desktop()->screenGeometry(this).width());
-//            localPosCam=displasia+localPosCam;
-//        }
+        //        if(QApplication::desktop()->screenNumber(this)!=QApplication::desktop()->screenNumber(screenPosCam.toPoint()))
+        //        {
+        //            QPoint displasia;displasia.setX(QApplication::desktop()->screenGeometry(this).width());
+        //            localPosCam=displasia+localPosCam;
+        //        }
         //        uncomment to tune this dislocation patch
-        //        std::cout << "local pos cam: " << localPosCam.x() << " " << localPosCam.y()
+        //        cout << "local pos cam: " << localPosCam.x() << " " << localPosCam.y()
         //                  << " Widget dimensions" << height() << " " << width()
         //                  << " Widget Position" <<this->geometry().topLeft().x()<<","<<this->geometry().topLeft().y()
-        //                  << std::endl;
+        //                  << endl;
 
-        //test if the touch is in the widget
+        //!test if the touch is in the widget
         if(localPosCam.x()>0&&localPosCam.x()<width() &&localPosCam.y()>0&&localPosCam.y()<height())
         {
-            //on touch start initialize finger position
+            //!on touch start initialize finger position
             if(pFrame.pf_moving_point_array[0].point_event==TP_DOWN)
             {
                 m_iFP.setX((int)pFrame.pf_moving_point_array[0].x);
@@ -1268,7 +1310,7 @@ void AVGLWidget::catchPF(AVPointFrame pFrame)
             }
             else
             {
-                //on finger movement calculate the distance to initial finger position (iFP)
+                //!on finger movement calculate the distance to initial finger position (iFP)
                 if(pFrame.pf_moving_point_array[0].point_event==TP_MOVE)
                 {
                     double deltaX = pFrame.pf_moving_point_array[0].x - m_iFP.x();
@@ -1282,10 +1324,10 @@ void AVGLWidget::catchPF(AVPointFrame pFrame)
                         //move the camera. TODO:move the object.
                         m_camOrigin+=camRightDirection * -deltaX/6.3f * m_camDistanceToOrigin/150.0f;
                         m_camOrigin+=camUpDirection * deltaY/6.3f * m_camDistanceToOrigin/150.0f;
-                        //                        std::cout << "Camera moved by (" << deltaX<<" , "<< deltaY<<")"<<std::endl;
+                        //                        cout << "Camera moved by (" << deltaX<<" , "<< deltaY<<")"<<endl;
                     }
                     else{
-                        std::cout << "Camera jumped by (" << deltaX<<" , "<< deltaY<<")"<<std::endl;
+                        //                        cout << "Camera jumped by (" << deltaX<<" , "<< deltaY<<")"<<endl;
                     }
                     updateGL();
                     //reset "initial" finger position
@@ -1296,8 +1338,9 @@ void AVGLWidget::catchPF(AVPointFrame pFrame)
 
                 if(pFrame.pf_moving_point_array[0].point_event==TP_UP)
                 {
-                    zooming=false; //zoom test
-                    std::cout<<"zooming stopped by 1 UP"<<std::endl;
+                    zooming=false;
+                    rotating=false;
+                    //                    cout<<"zooming stopped by 1 UP"<<endl;
                     AVTouchPoint e;
                     e.point_event=TP_UP;
                     e.x=0;
@@ -1321,74 +1364,135 @@ void AVGLWidget::catchPF(AVPointFrame pFrame)
             }
         }
     }
-    else
+
+
+    else //(if more than one finger)
     {
-        // for 2 fingers: zoom
+        //! With 2 fingers: zoom and rotate
         if(pFrame.pf_moving_point_count==2)
         {
+            //!Zooming starts if the second finger starts to touch
             if(pFrame.pf_moving_point_array[0].point_event==TP_DOWN||
                     pFrame.pf_moving_point_array[1].point_event==TP_DOWN)
             {
                 zooming=true;
+                //get the initial zooming separation
                 m_iZS.setX((qreal)(pFrame.pf_moving_point_array[0].x-pFrame.pf_moving_point_array[1].x));
                 m_iZS.setY((qreal)(pFrame.pf_moving_point_array[0].y-pFrame.pf_moving_point_array[1].y));
                 m_nZS=m_iZS;
-                std::cout<<"Start zooming by 1 or 2 down"<<std::endl;
             }
-            else{
+            //!Rotation starts if the second finger starts to touch
+            if(pFrame.pf_moving_point_array[0].point_event==TP_DOWN||
+                    pFrame.pf_moving_point_array[1].point_event==TP_DOWN)
+            {
+                rotating=true;
+                //save both touch points
+                m_tRot1.setX((qreal)(pFrame.pf_moving_point_array[0].x));
+                m_tRot1.setY((qreal) (pFrame.pf_moving_point_array[0].y));
+                m_tRot2.setX((qreal)(pFrame.pf_moving_point_array[1].x));
+                m_tRot2.setY((qreal) (pFrame.pf_moving_point_array[1].y));
+                //map them to screen coordinates
+                m_tRot1=QPointF(mapFromGlobal(m_tRot1.toPoint()));
+                m_tRot2=QPointF(mapFromGlobal(m_tRot2.toPoint()));
+                //draw a line between them
+                m_tRotL1=QLineF(m_tRot1,m_tRot2);
+                //initialize both rotation lines as equal
+                m_tRotL2=m_tRotL1;
+                //                cout<<"Start zooming by 1 or 2 down"<<endl;
+            }
+
+            else //(no finger is starting the touch)
+            {
+                //acquire new zoom separation
                 m_nZS.setX((qreal)(pFrame.pf_moving_point_array[0].x-pFrame.pf_moving_point_array[1].x));
                 m_nZS.setY((qreal)(pFrame.pf_moving_point_array[0].y-pFrame.pf_moving_point_array[1].y));
-                //                std::cout<<"Zooming by 1 or 2 Down"<<std::endl;
-                //zooming takes place if one of the fingers is moving and zooming is on:
+                //                cout<<"Zooming by 1 or 2 Down"<<endl;
+                //!zooming takes place if one of the fingers is moving and zooming is on:
                 if(zooming&&pFrame.pf_moving_point_array[0].point_event==TP_MOVE&&
                         pFrame.pf_moving_point_array[1].point_event==TP_MOVE)
                 {
-                    //                //on pinch zoom in
-                    //                if(m_iZS.manhattanLength()-m_nZS.manhattanLength()>m_zoomTolerance)
-                    //                {
-                    //                    setZoomLevel(1.01, true);
-                    //                    std::cout<<"Zooming IN"<<std::endl;
-                    //                }
-                    //                //on split zoom out
-                    //                if(m_iZS.manhattanLength()-m_nZS.manhattanLength()<-m_zoomTolerance)
-                    //                {
-                    //                    setZoomLevel(0.99, true);
-                    //                    std::cout<<"Zooming IN"<<std::endl;
-                    //                }
-
-                    //on split zoom in
-                    if(m_iZS.manhattanLength()-m_nZS.manhattanLength()>m_zoomTolerance)
+                    //!on pinch zoom out, on split zoom in
+                    //if the distance between fingers changes enough but the quotient not too big nor too small
+                    if(abs(m_iZS.manhattanLength()-m_nZS.manhattanLength())>m_zoomTolerance
+                            &&m_iZS.manhattanLength()/m_nZS.manhattanLength()<1.5f
+                            &&m_iZS.manhattanLength()/m_nZS.manhattanLength()>0.75f)
                     {
-                        setZoomLevel(m_iZS.manhattanLength()/m_nZS.manhattanLength(), true);
-                        std::cout<<"Zooming IN"<<m_iZS.manhattanLength()/m_nZS.manhattanLength()*100<<std::endl;
+                        m_camDistanceToOrigin*=m_iZS.manhattanLength()/m_nZS.manhattanLength();
+                        updateGL();
+//                                                cout<<"Zooming percent: "<<m_iZS.manhattanLength()/m_nZS.manhattanLength()*100<<endl;
                     }
-                    //on pinch zoom out
-                    if(m_iZS.manhattanLength()-m_nZS.manhattanLength()<-m_zoomTolerance)
-                    {
-                        setZoomLevel(1.01*m_iZS.manhattanLength()/m_nZS.manhattanLength(), true);
-                        std::cout<<"Zooming OUT"<<m_iZS.manhattanLength()/m_nZS.manhattanLength()*100<<std::endl;
-                    }
-                    //reset initial zoom separation
                     m_iZS=m_nZS;
                 }
-                //zooming ends if one finger goes up
+
+                //!rotation also takes place if one of the fingers is moving and rotating is on:
+
+                if(rotating&&pFrame.pf_moving_point_array[0].point_event==TP_MOVE&&
+                        pFrame.pf_moving_point_array[1].point_event==TP_MOVE)
+                {
+                    //acquire both finger positions
+                    m_tRot1.setX((qreal)(pFrame.pf_moving_point_array[0].x));
+                    m_tRot1.setY((qreal) (pFrame.pf_moving_point_array[0].y));
+                    m_tRot2.setX((qreal)(pFrame.pf_moving_point_array[1].x));
+                    m_tRot2.setY((qreal) (pFrame.pf_moving_point_array[1].y));
+                    //translate them to screen positions
+                    m_tRot1=QPointF(mapFromGlobal(m_tRot1.toPoint()));
+                    m_tRot2=QPointF(mapFromGlobal(m_tRot2.toPoint()));
+                    //draw a line between both fingers and save to new touch Rotation line
+                    m_tRotL2=QLineF(m_tRot1,m_tRot2);
+                    //rotate
+                    if(m_tRotL2.angleTo(m_tRotL1)>300)
+                    {
+                       m_MatrixArtefact.rotate(-m_tRotL2.angleTo(m_tRotL1),QVector3D(0,0,-1));
+                       updateGL();
+//                       cout<<"rotated counterclockwise by "<<m_tRotL2.angleTo(m_tRotL1)
+//                          <<" degrees around ("<<((m_tRot1+m_tRot2)/2).x()
+//                         <<" , " <<((m_tRot1+m_tRot2)/2).y()<<")."
+//                         <<endl;
+                    }
+                    if(m_tRotL2.angleTo(m_tRotL1)<60)
+                    {
+                       m_MatrixArtefact.rotate(m_tRotL2.angleTo(m_tRotL1),QVector3D(0,0,1));
+                       updateGL();
+//                       cout<<"rotated clockwise by "<<m_tRotL2.angleTo(m_tRotL1)
+//                          <<" degrees around ("<<((m_tRot1+m_tRot2)/2).x()
+//                         <<" , " <<((m_tRot1+m_tRot2)/2).y()<<")."
+//                         <<endl;
+                    }
+                    //refresh touch rotation line
+                    updateGL();
+                    m_tRotL1=m_tRotL2;
+                }
+
+                //!zooming ends if one of both fingers go up
                 if(zooming&&pFrame.pf_moving_point_array[0].point_event==TP_UP
                         ||pFrame.pf_moving_point_array[1].point_event==TP_UP)
                 {
                     zooming=false;
-                    std::cout<<"zooming stopped by 1 of 2 UP (or 2 up)"<<std::endl;
+//                                        cout<<"zooming stopped by 1 of 2 UP (or 2 up)"<<endl;
+                    m_trackball->release(pixelPosToViewPos(localPosCam), m_MatrixArtefact);
+                }
+
+                //!rotation ends if one of both fingers go up
+                if(rotating&&pFrame.pf_moving_point_array[0].point_event==TP_UP
+                        ||pFrame.pf_moving_point_array[1].point_event==TP_UP)
+                {
+                    rotating=false;
+//                                        cout<<"rotating stopped by 1 of 2 UP (or 2 up)"<<endl;
                     m_trackball->release(pixelPosToViewPos(localPosCam), m_MatrixArtefact);
                 }
             }
 
-        }else{
-            //on third finger down, initialize trackball movement in middle point of all fingers and stop zooming
-            //the movement slows down when more fingers are on the screen.
+        }
+        else //(with more than 2 fingers)
+        {
+            //!on third finger down, initialize trackball movement in middle point of all fingers and stop zooming
+            //!the movement slows down when more fingers are on the screen.
             if(pFrame.pf_moving_point_array[0].point_event==TP_DOWN||
                     pFrame.pf_moving_point_array[1].point_event==TP_DOWN||
                     pFrame.pf_moving_point_array[2].point_event==TP_DOWN){
                 zooming=false;
-                std::cout<<"zooming stopped by 2+ DOWN"<<std::endl;
+                rotating=false;
+                                cout<<"zooming and rotating stopped by 2+ DOWN"<<endl;
                 AVTouchPoint e;
                 e.point_event=TP_DOWN;e.x=0;e.y=0;e.dx=0;e.dy=0;
                 for(int i = 0; i < pFrame.pf_moving_point_count; ++ i){
@@ -1440,7 +1544,8 @@ void AVGLWidget::catchPF(AVPointFrame pFrame)
                         //if there were three fingers and now there are two, zooming starts
                         if(pFrame.pf_moving_point_count==3)
                             zooming=true;
-                        std::cout<<"Start zooming by 3rd left`"<<std::endl;
+                            rotating=true;
+                        //                        cout<<"Start zooming by 3rd left`"<<endl;
 
                     }
                 }
@@ -1466,13 +1571,13 @@ void AVGLWidget::catchEvent(AVTouchPoint &tPoint)
         switch(tPoint.point_event)
         {
         case TP_DOWN:
-            cout << "  Finger " << (int)tPoint.id << " touched at (" << localPos.x() << "," << (int)localPos.y()
-                 << ") width:" << tPoint.dx << " height:" << tPoint.dy << endl;
+                        cout << "  Finger " << (int)tPoint.id << " touched at (" << localPos.x() << "," << (int)localPos.y()
+                             << ") width:" << tPoint.dx << " height:" << tPoint.dy << endl;
             m_trackball->push(pixelPosToViewPos(localPos), QQuaternion());
             break;
         case TP_MOVE:
-            cout<<"  Finger " << (int)tPoint.id <<" is moving at: (" <<localPos.x ()<< "," << localPos.y() << ")" << endl;
-            rotation = m_trackball->move(pixelPosToViewPos(localPos), m_MatrixArtefact);
+                        cout<<"  Finger " << (int)tPoint.id <<" is moving at: (" <<localPos.x ()<< "," << localPos.y() << ")" << endl;
+                        rotation = m_trackball->move(pixelPosToViewPos(localPos), m_MatrixArtefact);
             m_MatrixArtefact.translate(m_model->m_centerPoint);
             m_MatrixArtefact.translate(m_camOrigin);
             m_MatrixArtefact.rotate(rotation);
@@ -1480,8 +1585,8 @@ void AVGLWidget::catchEvent(AVTouchPoint &tPoint)
             m_MatrixArtefact.translate(-m_model->m_centerPoint);
             break;
         case TP_UP:
-            cout << "  Finger " << (int)tPoint.id << " left at (" << localPos.x() << "," << localPos.y()
-                 << ") width:" << tPoint.dx << " height:" << tPoint.dy << endl;
+                        cout << "  Finger " << (int)tPoint.id << " left at (" << localPos.x() << "," << localPos.y()
+                             << ") width:" << tPoint.dx << " height:" << tPoint.dy << endl;
             m_trackball->release(pixelPosToViewPos(localPos), m_MatrixArtefact);
             break;
         }
@@ -1503,7 +1608,7 @@ void AVGLWidget::mousePressEvent(QMouseEvent *event)
     {
         if(!m_shiftDown) m_trackball->push(pixelPosToViewPos(event->localPos()), QQuaternion());
         m_lastMousePosition = event->pos();
-        std::cout << "That was the mouse at:"<<event->localPos().x() << std::endl;
+        //        cout << "That was the mouse at:"<<event->localPos().x() << endl;
     }
     else if (event->buttons() & Qt::RightButton)
     {
