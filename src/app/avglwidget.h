@@ -234,6 +234,7 @@ private:
     int  m_jumpSize=40;
     static const
     int      m_zoomTolerance=1;
+    QMatrix4x4  m_YZInverter;
 
     QMatrix4x4  m_pMatrix;
     QMatrix4x4  m_vMatrix;

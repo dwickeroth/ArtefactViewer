@@ -140,18 +140,6 @@ void AVMainWindow::keyPressEvent(QKeyEvent *e)
       m_glWidget->setCursor(Qt::ArrowCursor);
     if(k_Ctrl&&e->key()==Qt::Key_H)
         m_glWidget->setCursor(Qt::BlankCursor);
-
-//    TODO: implement shortcut to activate touch input
-//    if(k_Ctrl&&e->key()==Qt::Key_T){
-//    AVPQReader sample;
-//    int err_code=sample.Init();
-//    if(err_code != PQMTE_SUCCESS){
-//        std::cout << "no success" << std::endl;
-//    }
-
-//    }
-
-
 }
 
 

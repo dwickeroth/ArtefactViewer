@@ -102,8 +102,10 @@ void AVGLWidget::initialize()
     m_enhance_param[2][0] = 10; m_enhance_param[2][1] = 25; m_enhance_param[2][2] = 0;//bright edges
     m_enhance_param[3][0] = 10; m_enhance_param[3][1] =  0; m_enhance_param[3][2] = 0;//dark valleys
     m_paintAnnotations = false;
+    //TODO: change to header as constants
     m_camDistanceToOrigin = 150.0;
     m_eyeSeparation = 10.0;
+
     m_camOrigin = QVector3D(0,0,0);
     m_backgroundColor1 = QVector3D(0.0,0.0,0.0);
     m_backgroundColor2 = QVector3D(0.0,0.0,0.0);
@@ -125,7 +127,9 @@ void AVGLWidget::initialize()
     // Light 4
     AVLight light4(false, 200, 240, 0, 100);
     m_lights.append(light4);
-
+    m_YZInverter.setToIdentity();
+    m_YZInverter.rotate(-90,1,0,0);
+    m_YZInverter.rotate(180,0,1,0);
     emit glWidgetInitialised();
 }
 
@@ -181,9 +185,6 @@ QImage AVGLWidget::renderToOffscreenBuffer(int width, int height)
     fbo.bind();
     // Select back right buffer
     glDrawBuffer(GL_BACK_RIGHT);
-    //UNSURE: uncomment if offscreen buffer is not shown in stereo
-    //    if(formato.stereo()){cout << "it's on for offscreen right!" << endl;}
-    //    else{cout << "it's OFF for offscreen right!" << endl;}
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     drawBackground();
     setupCamera(false);
@@ -999,10 +1000,13 @@ void AVGLWidget::drawOverlays(QPaintDevice *device, bool offscreen, int fboWidth
 
 void AVGLWidget::catchKP(AVHand mano)
 {
-    //    cout<<"Left Open "<<m_kLOC<<", Right Open "<<m_kROC<<", Left Closed "<<m_kLCC<<", Right Closed "<<m_kRCC
-    //        <<", LUK "<<m_kLUC<<", RUK "<<m_kRUC<<", LNT "<<m_kLNTC<<", RNT "<<m_kRNTC<<endl;
+    lesstext++;
+    //    if(lesstext%10==0)
+    //        cout<<"Left Open "<<m_kLOC<<", Right Open "<<m_kROC<<", Left Closed "<<m_kLCC<<", Right Closed "<<m_kRCC
+    //            <<", LUK "<<m_kLUC<<", RUK "<<m_kRUC<<", LNT "<<m_kLNTC<<", RNT "<<m_kRNTC<<endl;
     //!if both hands have been open for more than 3 seconds, kinect starts watching
-    if(m_kLOC>10&&m_kROC>10&&!m_kinectIsWatching){
+
+    if(m_kLOC>5&&m_kROC>5&&!m_kinectIsWatching){
         cout<<"Started reading"<<endl;
         m_kinectIsWatching=true;
         return;
@@ -1010,12 +1014,13 @@ void AVGLWidget::catchKP(AVHand mano)
 
     //!if translation is off and kinect is watching and the signal is from the left hand, we begin to translate with left.
 
-    if( !m_kLTr&&(m_kinectIsWatching&&(m_kLCC==5&&m_kROC>5))&&mano.isLeft)
+    if( !m_kLTr&&(m_kinectIsWatching&&(m_kLCC==2&&m_kROC>2))&&mano.isLeft)
     {
         m_kLTr=true;
-
+        //! commented out for vertical screen
+        //m_kInitialTr= QVector4D((qreal)mano.x,(qreal)mano.y,(qreal)mano.z, 1);
+        //!For horizontal screen, y and z coordinates are swapped
         m_kInitialTr= QVector4D((qreal)-mano.x,(qreal)-mano.z,(qreal)mano.y, 1);
-        //                     m_kInitialTr= QVector4D((qreal)mano.x,(qreal)mano.y,(qreal)mano.z, 1);
         cout<<"begin left translation at ("
            <<m_kInitialTr.x()<< " , "
           <<m_kInitialTr.y()<< " , "
@@ -1023,9 +1028,12 @@ void AVGLWidget::catchKP(AVHand mano)
         <<endl;    }
     //!if translation is off and kinect is watching and the signal is from the right hand, we begin to translate with right.
 
-    if( !m_kRTr&&(m_kinectIsWatching&&((m_kLOC>5&&m_kRCC==5)&&!mano.isLeft)))
+    if( !m_kRTr&&(m_kinectIsWatching&&((m_kLOC>2&&m_kRCC==2)&&!mano.isLeft)))
     {
         m_kRTr=true;
+        //! commented out for vertical screen
+        //m_kInitialTr= QVector4D((qreal)mano.x,(qreal)mano.y,(qreal)mano.z, 1);
+        //!For horizontal screen, y and z coordinates are swapped
         m_kInitialTr= QVector4D((qreal)-mano.x,(qreal)-mano.z,(qreal)mano.y, 1);
         cout<<"begin right translation at ("
            <<m_kInitialTr.x()<< " , "
@@ -1038,83 +1046,87 @@ void AVGLWidget::catchKP(AVHand mano)
 
     if(m_kinectIsWatching&&m_kLTr&&mano.isLeft)
     {
-        //vertical screen
-        //                m_kNewTr= QVector4D((qreal)-mano.x,(qreal)mano.y,(qreal)mano.z, 1);
-        //For horizontal screen, y and z coordinates are swapped
+        //! commented out for vertical screen
+        //m_kNewTr= QVector4D((qreal)-mano.x,(qreal)mano.y,(qreal)mano.z, 1);
+
+        //!For horizontal screen, y and z coordinates are swapped
         m_kNewTr= QVector4D((qreal)-mano.x,(qreal)mano.z,(qreal)-mano.y, 1);
-        m_kResTr=500*(m_kInitialTr-m_kNewTr);
-        if(lesstext%500==0)
+        m_kResTr=1000*(m_kInitialTr-m_kNewTr);
+        if(lesstext%20==0)
             cout<<"Translating with left! moved by( "
                <<m_kResTr.x()<<" , "
               <<m_kResTr.y()<<" , "
              <<m_kResTr.z()<<") "
             <<endl;
-        if(abs(m_kResTr.x())<100&&abs(m_kResTr.y())<100&&abs(m_kResTr.z())<100){
-            //            m_MatrixArtefact.translate(m_kResTr.toVector3D());
-            if(lesstext%10==0)
-                m_vMatrix.translate(m_kResTr.toVector3D());
-            //                    m_LeftVMatrix.translate(m_kResTr.toVector3D());
-            //                    m_RightVMatrix.translate(m_kResTr.toVector3D());
-            if(lesstext%10==0)
-                m_pMatrix.translate(m_kResTr.toVector3D());
+
+        if(abs(m_kResTr.x())<50&&abs(m_kResTr.y())<50&&abs(m_kResTr.z())<50)
+        {
+            m_pMatrix.translate(m_camPosition);
+            m_pMatrix.translate(m_kResTr.toVector3D());
+            m_pMatrix.translate(-m_camPosition);
         }
-        //        if(lesstext%10==0)
-        updateGL();
         m_kInitialTr=m_kNewTr;
         if(m_kROC==0||m_kLCC==0)
         {
             m_kLTr=false;
             cout<<"stopped translation left"<<endl;
         }
+        updateGL();
     }
 
     //!if kinect is watching and right (artefact) translation is on and the signal is from the right hand, we translate with right.
 
     if(m_kinectIsWatching&&m_kRTr&&!mano.isLeft)
     {
-        //vertical screen
-        //                m_kNewTr= QVector4D((qreal)-mano.x,(qreal)mano.y,(qreal)mano.z, 1);
+        //! commented out for vertical screen
+        //m_kNewTr= QVector4D((qreal)-mano.x,(qreal)mano.y,(qreal)mano.z, 1);
+
         //! For horizontal screen, y and z coordinates are swapped
         m_kNewTr= QVector4D((qreal)-mano.x,(qreal)-mano.z,(qreal)mano.y, 1);
-        m_kResTr=500*(m_kInitialTr-m_kNewTr);
-        if(lesstext%500==0)
+        m_kResTr=1000*(m_kInitialTr-m_kNewTr);
+        if(lesstext%20==0)
             cout<<"Translating with right! moved by ("
                <<m_kResTr.x()<<" , "
               <<m_kResTr.y()<<" , "
              <<m_kResTr.z()<<") "
             <<endl;
-        if(abs(m_kResTr.x())<10&&abs(m_kResTr.y())<10&&abs(m_kResTr.z())<10){
+
+        if(abs(m_kResTr.x())<50&&abs(m_kResTr.y())<50&&abs(m_kResTr.z())<50){
+            m_MatrixArtefact.translate(m_model->m_centerPoint);
             m_MatrixArtefact.translate(m_kResTr.toVector3D());
-            //            m_vMatrix.translate(m_MatrixArtefact.inverted()*m_kResTr.toVector3D());
-            //            m_LeftVMatrix.translate(m_MatrixArtefact.inverted()*m_kResTr.toVector3D());
-            //            m_RightVMatrix.translate(m_MatrixArtefact.inverted()*m_kResTr.toVector3D());
-            //            m_pMatrix.translate(m_MatrixArtefact.inverted()*m_vMatrix.inverted()*m_kResTr.toVector3D());
+            m_MatrixArtefact.translate(-m_model->m_centerPoint);
 
         }
-        updateGL();
         m_kInitialTr=m_kNewTr;
         if(m_kLOC==0||m_kRCC==0)
         {
             m_kRTr=false;
             cout<<"stopped translation right"<<endl;
         }
+        updateGL();
     }
 
     //!3D Rotation with kinect
-    if(!m_kRot&&m_kinectIsWatching&&((m_kLCC>5&&m_kRCC==5)||(m_kLCC==5&&m_kRCC>5)))
+    if(!m_kRot&&m_kinectIsWatching
+            &&((m_kLCC>2&&m_kRCC==2)||(m_kLCC==2&&m_kRCC>2)))
     {
         m_kRTr=false;
         m_kLTr=false;
-        if(mano.isLeft){
+        if(mano.isLeft&&!lRotInit){
+            //save position for the left hand
             m_kNewLeftRot=QVector3D((qreal)mano.x,(qreal)mano.y,(qreal)mano.z);
             m_kOldLeftRot=m_kNewLeftRot;
             lRotInit=true;
-            m_kRCC=0;
+            m_kRCC=1;
+            cout<<"Initialized left 3D Rotation"<<endl;
         }
-        if(!mano.isLeft){
-            m_kNewRightRot=QVector3D((qreal)mano.x,(qreal)mano.y,(qreal)mano.z);
+        if(!mano.isLeft&&!rRotInit){
+            //save position for the right hand
+            m_kNewRightRot=QVector3D((qreal)mano.x,-(qreal)mano.y,(qreal)mano.z);
             m_kOldRightRot=m_kNewRightRot;
             rRotInit=true;
+            m_kLCC=1;
+            cout<<"Initialized right 3D Rotation"<<endl;
         }
     }
     //once the left and right rotation initial positions have been saved
@@ -1125,7 +1137,7 @@ void AVGLWidget::catchKP(AVHand mano)
         m_kOldRotVec=m_kOldRightRot-m_kOldLeftRot;
         lRotInit=false;
         rRotInit=false;
-        cout<<"Initialized Rotating"<<endl;
+        cout<<"Initialized 3D Rotation"<<endl;
     }
 
     if(m_kRot){
@@ -1133,34 +1145,39 @@ void AVGLWidget::catchKP(AVHand mano)
         //refresh hand positions
         if(!mano.isLeft)
         {
-            m_kNewRightRot=QVector3D((qreal)mano.x,(qreal)mano.y,(qreal)mano.z);
+            m_kNewRightRot=QVector3D((qreal)mano.x,-(qreal)mano.y,(qreal)mano.z);
         }
         if(mano.isLeft)
         {
-            m_kNewLeftRot=QVector3D((qreal)mano.x,(qreal)mano.y,(qreal)mano.z);
+            m_kNewLeftRot=QVector3D((qreal)mano.x,-(qreal)mano.y,(qreal)mano.z);
         }
         //draw new rotation line
         m_kNewRotVec=m_kNewRightRot-m_kNewLeftRot;
         //rotate by axis and angle
-        if(acos(QVector3D::dotProduct(m_kOldRotVec.normalized(),m_kNewRotVec.normalized()))* 180.0 / PI>1)
+        if(acos(QVector3D::dotProduct(m_kOldRotVec.normalized(),m_kNewRotVec.normalized()))* 180.0 / PI<30||
+                acos(QVector3D::dotProduct(m_kOldRotVec.normalized(),m_kNewRotVec.normalized()))* 180.0 / PI>330)
         {
-        m_MatrixArtefact.rotate(-acos(QVector3D::dotProduct(m_kOldRotVec.normalized(),m_kNewRotVec.normalized()))* 180.0f / PI,
-                                QVector3D::crossProduct(m_kOldRotVec.normalized(),m_kNewRotVec.normalized()));
+            m_MatrixArtefact.translate(m_model->m_centerPoint);
+            m_MatrixArtefact.translate(m_camOrigin);
+            m_MatrixArtefact.rotate(acos(QVector3D::dotProduct(m_kOldRotVec.normalized(),m_kNewRotVec.normalized()))* 180.0f / PI,
+                                    m_YZInverter*(QVector3D::crossProduct(m_kOldRotVec.normalized(),m_kNewRotVec.normalized())));
+            m_MatrixArtefact.translate(-m_camOrigin);
+            m_MatrixArtefact.translate(-m_model->m_centerPoint);
         }
-//        cout<<"rotating by "
-//           <<acos(QVector3D::dotProduct(m_kOldRotVec.normalized(),m_kNewRotVec.normalized()))* 180.0 / PI
-//            <<" around the axis: ("
-//            <<(QVector3D::crossProduct(m_kOldRotVec,m_kNewLeftRot)).x()<<" , "
-//           <<(QVector3D::crossProduct(m_kOldRotVec,m_kNewLeftRot)).y()<<" , "
-//          <<(QVector3D::crossProduct(m_kOldRotVec,m_kNewLeftRot)).z()<<" )."
-//             <<endl;
-        updateGL();
 
+        //        cout<<"rotating by "
+        //           <<acos(QVector3D::dotProduct(m_kOldRotVec.normalized(),m_kNewRotVec.normalized()))* 180.0 / PI
+        //            <<" around the axis: ("
+        //            <<(QVector3D::crossProduct(m_kOldRotVec,m_kNewLeftRot)).x()<<" , "
+        //           <<(QVector3D::crossProduct(m_kOldRotVec,m_kNewLeftRot)).y()<<" , "
+        //          <<(QVector3D::crossProduct(m_kOldRotVec,m_kNewLeftRot)).z()<<" )."
+        //             <<endl;
+
+        updateGL();
+        //update hand positions and connection vector
         m_kOldLeftRot=m_kNewLeftRot;
         m_kOldRightRot=m_kNewRightRot;
         m_kOldRotVec=m_kNewRotVec;
-
-
 
         if(m_kLCC==0||m_kRCC==0)
         {
@@ -1169,33 +1186,32 @@ void AVGLWidget::catchKP(AVHand mano)
             m_kLTr=false;
             lRotInit=false;
             rRotInit=false;
-            cout<<"stopped rotating"<<endl;
+            cout<<"stopped 3D Rotation"<<endl;
         }
 
     }
 
-    if(m_kLNTC>50&&m_kRNTC>50){
+    if(m_kLNTC>5&&m_kRNTC>5){
         if(lesstext%1000==0)
-            cout<<"Stopped reading, both hands untracked for more than 10s"<<endl;
+            cout<<"Stopped reading, both hands untracked for more than 5s"<<endl;
         m_kinectIsWatching=false;
         m_kLNTC=0;
         m_kRNTC=0;
     }
-    if(m_kLUC>5000||m_kRUC>5000||m_kLNTC>5000||m_kRNTC>5000){
-        lesstext++;
+    if(m_kLUC>50||m_kRUC>50){
         if(lesstext%100==0)
-            cout<<"Stopped reading, one or more hands were unrecognized or unknown for about 30s"<<endl;
+            cout<<"Stopped reading, one or more hands were unrecognized or unknown for about 10s"<<endl;
         m_kinectIsWatching=false;
         m_kLNTC=0;
         m_kRNTC=0;
         m_kLUC=0;
         m_kRUC=0;
-
     }
     AVGLWidget::kinectCount(mano);
 }
 
 void AVGLWidget::kinectCount(AVHand mano){
+
     if(mano.hState==0&&mano.isLeft==true){
         //        cout<<"Left hand state is unknown since "<<m_kLUC<<endl;
         m_kLUC++;
@@ -1216,7 +1232,7 @@ void AVGLWidget::kinectCount(AVHand mano){
     if(mano.hState==3&&mano.isLeft==true){
         //        cout<<"Left hand is closed since "<<m_kLCC<<endl;
         m_kLCC++;
-        m_kLUC=0;
+        m_kLOC=0;
         m_kLUC=0;
         m_kLNTC=0;
     }
@@ -1273,7 +1289,7 @@ void AVGLWidget::resetRightKinectCounts(){
 /////////////////////////////////////////////////////////////////
 ///////////////////////////TOUCH EVENTS//////////////////////////
 /////////////////////////////////////////////////////////////////
-//if at any time there are objects on the touchscreen, this function is called
+//if at any time there are signals from the touchscreen, this function is called
 void AVGLWidget::catchPF(AVPointFrame pFrame)
 {
 
@@ -1324,10 +1340,10 @@ void AVGLWidget::catchPF(AVPointFrame pFrame)
                         //move the camera. TODO:move the object.
                         m_camOrigin+=camRightDirection * -deltaX/6.3f * m_camDistanceToOrigin/150.0f;
                         m_camOrigin+=camUpDirection * deltaY/6.3f * m_camDistanceToOrigin/150.0f;
-                        //                        cout << "Camera moved by (" << deltaX<<" , "<< deltaY<<")"<<endl;
+                        //cout << "Camera moved by (" << deltaX<<" , "<< deltaY<<")"<<endl;
                     }
                     else{
-                        //                        cout << "Camera jumped by (" << deltaX<<" , "<< deltaY<<")"<<endl;
+                        //cout << "Camera jumped by (" << deltaX<<" , "<< deltaY<<")"<<endl;
                     }
                     updateGL();
                     //reset "initial" finger position
@@ -1418,13 +1434,12 @@ void AVGLWidget::catchPF(AVPointFrame pFrame)
                             &&m_iZS.manhattanLength()/m_nZS.manhattanLength()>0.75f)
                     {
                         m_camDistanceToOrigin*=m_iZS.manhattanLength()/m_nZS.manhattanLength();
-                        updateGL();
-//                                                cout<<"Zooming percent: "<<m_iZS.manhattanLength()/m_nZS.manhattanLength()*100<<endl;
+                        //                                                cout<<"Zooming percent: "<<m_iZS.manhattanLength()/m_nZS.manhattanLength()*100<<endl;
                     }
                     m_iZS=m_nZS;
                 }
 
-                //!rotation also takes place if one of the fingers is moving and rotating is on:
+                //!also rotation takes place if one of the fingers is moving and rotating is on:
 
                 if(rotating&&pFrame.pf_moving_point_array[0].point_event==TP_MOVE&&
                         pFrame.pf_moving_point_array[1].point_event==TP_MOVE)
@@ -1442,24 +1457,26 @@ void AVGLWidget::catchPF(AVPointFrame pFrame)
                     //rotate
                     if(m_tRotL2.angleTo(m_tRotL1)>300)
                     {
-                       m_MatrixArtefact.rotate(-m_tRotL2.angleTo(m_tRotL1),QVector3D(0,0,-1));
-                       updateGL();
-//                       cout<<"rotated counterclockwise by "<<m_tRotL2.angleTo(m_tRotL1)
-//                          <<" degrees around ("<<((m_tRot1+m_tRot2)/2).x()
-//                         <<" , " <<((m_tRot1+m_tRot2)/2).y()<<")."
-//                         <<endl;
+                        m_MatrixArtefact.translate(m_model->m_centerPoint);
+                        m_MatrixArtefact.rotate(-m_tRotL2.angleTo(m_tRotL1),QVector3D(0,0,-1));
+                        m_MatrixArtefact.translate(-m_model->m_centerPoint);
+                        //                       cout<<"rotated counterclockwise by "<<m_tRotL2.angleTo(m_tRotL1)
+                        //                          <<" degrees around ("<<((m_tRot1+m_tRot2)/2).x()
+                        //                         <<" , " <<((m_tRot1+m_tRot2)/2).y()<<")."
+                        //                         <<endl;
                     }
                     if(m_tRotL2.angleTo(m_tRotL1)<60)
                     {
-                       m_MatrixArtefact.rotate(m_tRotL2.angleTo(m_tRotL1),QVector3D(0,0,1));
-                       updateGL();
-//                       cout<<"rotated clockwise by "<<m_tRotL2.angleTo(m_tRotL1)
-//                          <<" degrees around ("<<((m_tRot1+m_tRot2)/2).x()
-//                         <<" , " <<((m_tRot1+m_tRot2)/2).y()<<")."
-//                         <<endl;
+                        m_MatrixArtefact.translate(m_model->m_centerPoint);
+                        m_MatrixArtefact.rotate(m_tRotL2.angleTo(m_tRotL1),QVector3D(0,0,1));
+                        m_MatrixArtefact.translate(-m_model->m_centerPoint);
+
+                        //                       cout<<"rotated clockwise by "<<m_tRotL2.angleTo(m_tRotL1)
+                        //                          <<" degrees around ("<<((m_tRot1+m_tRot2)/2).x()
+                        //                         <<" , " <<((m_tRot1+m_tRot2)/2).y()<<")."
+                        //                         <<endl;
                     }
                     //refresh touch rotation line
-                    updateGL();
                     m_tRotL1=m_tRotL2;
                 }
 
@@ -1468,7 +1485,7 @@ void AVGLWidget::catchPF(AVPointFrame pFrame)
                         ||pFrame.pf_moving_point_array[1].point_event==TP_UP)
                 {
                     zooming=false;
-//                                        cout<<"zooming stopped by 1 of 2 UP (or 2 up)"<<endl;
+                    //                                        cout<<"zooming stopped by 1 of 2 UP (or 2 up)"<<endl;
                     m_trackball->release(pixelPosToViewPos(localPosCam), m_MatrixArtefact);
                 }
 
@@ -1477,9 +1494,10 @@ void AVGLWidget::catchPF(AVPointFrame pFrame)
                         ||pFrame.pf_moving_point_array[1].point_event==TP_UP)
                 {
                     rotating=false;
-//                                        cout<<"rotating stopped by 1 of 2 UP (or 2 up)"<<endl;
+                    //                                        cout<<"rotating stopped by 1 of 2 UP (or 2 up)"<<endl;
                     m_trackball->release(pixelPosToViewPos(localPosCam), m_MatrixArtefact);
                 }
+                updateGL();
             }
 
         }
@@ -1492,7 +1510,7 @@ void AVGLWidget::catchPF(AVPointFrame pFrame)
                     pFrame.pf_moving_point_array[2].point_event==TP_DOWN){
                 zooming=false;
                 rotating=false;
-                                cout<<"zooming and rotating stopped by 2+ DOWN"<<endl;
+                cout<<"zooming and rotating stopped by 2+ DOWN"<<endl;
                 AVTouchPoint e;
                 e.point_event=TP_DOWN;e.x=0;e.y=0;e.dx=0;e.dy=0;
                 for(int i = 0; i < pFrame.pf_moving_point_count; ++ i){
@@ -1544,7 +1562,7 @@ void AVGLWidget::catchPF(AVPointFrame pFrame)
                         //if there were three fingers and now there are two, zooming starts
                         if(pFrame.pf_moving_point_count==3)
                             zooming=true;
-                            rotating=true;
+                        rotating=true;
                         //                        cout<<"Start zooming by 3rd left`"<<endl;
 
                     }
@@ -1571,13 +1589,13 @@ void AVGLWidget::catchEvent(AVTouchPoint &tPoint)
         switch(tPoint.point_event)
         {
         case TP_DOWN:
-                        cout << "  Finger " << (int)tPoint.id << " touched at (" << localPos.x() << "," << (int)localPos.y()
-                             << ") width:" << tPoint.dx << " height:" << tPoint.dy << endl;
+            cout << "  Finger " << (int)tPoint.id << " touched at (" << localPos.x() << "," << (int)localPos.y()
+                 << ") width:" << tPoint.dx << " height:" << tPoint.dy << endl;
             m_trackball->push(pixelPosToViewPos(localPos), QQuaternion());
             break;
         case TP_MOVE:
-                        cout<<"  Finger " << (int)tPoint.id <<" is moving at: (" <<localPos.x ()<< "," << localPos.y() << ")" << endl;
-                        rotation = m_trackball->move(pixelPosToViewPos(localPos), m_MatrixArtefact);
+            cout<<"  Finger " << (int)tPoint.id <<" is moving at: (" <<localPos.x ()<< "," << localPos.y() << ")" << endl;
+            rotation = m_trackball->move(pixelPosToViewPos(localPos), m_MatrixArtefact);
             m_MatrixArtefact.translate(m_model->m_centerPoint);
             m_MatrixArtefact.translate(m_camOrigin);
             m_MatrixArtefact.rotate(rotation);
@@ -1585,8 +1603,8 @@ void AVGLWidget::catchEvent(AVTouchPoint &tPoint)
             m_MatrixArtefact.translate(-m_model->m_centerPoint);
             break;
         case TP_UP:
-                        cout << "  Finger " << (int)tPoint.id << " left at (" << localPos.x() << "," << localPos.y()
-                             << ") width:" << tPoint.dx << " height:" << tPoint.dy << endl;
+            cout << "  Finger " << (int)tPoint.id << " left at (" << localPos.x() << "," << localPos.y()
+                 << ") width:" << tPoint.dx << " height:" << tPoint.dy << endl;
             m_trackball->release(pixelPosToViewPos(localPos), m_MatrixArtefact);
             break;
         }
