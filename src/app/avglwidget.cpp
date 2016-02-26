@@ -1527,7 +1527,9 @@ void AVGLWidget::catchPF(AVPointFrame pFrame)
                     if(m_tRotL2.angleTo(m_tRotL1)>300)
                     {
                         m_MatrixArtefact.translate(m_model->m_centerPoint);
+                        m_MatrixArtefact.translate(m_camOrigin);
                         m_MatrixArtefact.rotate(-m_tRotL2.angleTo(m_tRotL1),m_MatrixArtefact.inverted().mapVector(QVector3D(0,0,1)));
+                        m_MatrixArtefact.translate(-m_camOrigin);
                         m_MatrixArtefact.translate(-m_model->m_centerPoint);
                         //                       cout<<"rotated counterclockwise by "<<m_tRotL2.angleTo(m_tRotL1)
                         //                          <<" degrees around ("<<((m_tRot1+m_tRot2)/2).x()
