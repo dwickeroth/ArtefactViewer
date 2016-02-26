@@ -55,7 +55,7 @@ AVGLWidget::AVGLWidget(QWidget *parent) : QGLWidget(QGLFormat(QGL::SampleBuffers
     initialize();
     setAutoFillBackground(false);
     setAutoBufferSwap(false);
-    m_trackball = new AVTrackBall(AVTrackBall::Sphere);
+    m_trackball = new AVTrackBall(AVTrackBall::Plane);
     m_slowDownTrackball=0;
     zooming=false;
     rotating=false;
@@ -90,8 +90,9 @@ void AVGLWidget::initialize()
     QThread::currentThread()->setPriority(QThread::HighestPriority);
     m_MatrixLights.setToIdentity();
     m_vMatrix.setToIdentity();
-    m_LeftVMatrix.setToIdentity();
-    m_RightVMatrix.setToIdentity();
+    m_vMatrixCurrent.setToIdentity();
+    m_leftVMatrix.setToIdentity();
+    m_rightVMatrix.setToIdentity();
     m_lighting = true;
     m_lightsAreVisible = true;
     m_vertexColors = false;
@@ -127,9 +128,6 @@ void AVGLWidget::initialize()
     // Light 4
     AVLight light4(false, 200, 240, 0, 100);
     m_lights.append(light4);
-    m_YZInverter.setToIdentity();
-    m_YZInverter.rotate(-90,1,0,0);
-    m_YZInverter.rotate(180,0,1,0);
     emit glWidgetInitialised();
 }
 
@@ -154,57 +152,60 @@ QImage AVGLWidget::renderToOffscreenBuffer(int width, int height)
     QGLFramebufferObject fbo(width, height, fboFormat);
 
     m_pMatrix.setToIdentity();
-    //    m_pMatrix.perspective(60.0f, (float) width / (float) height, 0.001f, 100000.0f);
+    m_pMatrix.perspective(60.0f, (float) width / (float) height, 0.001f, 100000.0f);
     m_pMatrix.frustum(-(float) width /2,(float) width /2, -(float) height/2,(float) height/2, 0.001f, 100000.0f);
     glViewport(0, 0, fbo.size().width(), fbo.size().height());
-    //UNSURE if I need to redraw in offscreen buffer
+
+
     fbo.bind();
     // Select back left buffer
-
     glDrawBuffer(GL_BACK_LEFT);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     drawBackground();
+    m_vMatrixCurrent=m_leftVMatrix;
     setupCamera(true);
     if (m_lighting) // Shading with lighting
     {
-        drawModelShaded(m_LeftVMatrix);
+        drawModelShaded(m_leftVMatrix);
 
         if (m_lightsAreVisible) //Draw light representations
         {
-            drawLights(m_LeftVMatrix);
+            drawLights(m_leftVMatrix);
         }
     }
     else // Lighting off
     {
-        drawModelNoShading(m_LeftVMatrix);
+        drawModelNoShading(m_leftVMatrix);
     }
     drawOverlays(&fbo, true, width);
     fbo.release();
 
-    //bind again? UNSURE
+    //bind again
     fbo.bind();
     // Select back right buffer
     glDrawBuffer(GL_BACK_RIGHT);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     drawBackground();
+    m_vMatrixCurrent=m_rightVMatrix;
     setupCamera(false);
     if (m_lighting) // Shading with lighting
     {
-        drawModelShaded(m_RightVMatrix);
+        drawModelShaded(m_rightVMatrix);
 
         if (m_lightsAreVisible) //Draw light representations
         {
-            drawLights(m_RightVMatrix);
+            drawLights(m_rightVMatrix);
         }
     }
     else // Lighting off
     {
-        drawModelNoShading(m_RightVMatrix);
+        drawModelNoShading(m_rightVMatrix);
     }
     drawOverlays(&fbo, true, width);
 
 
-    //    fbo.release();
+    fbo.release();
+    m_vMatrixCurrent=m_vMatrix;
 
     resizeGL(this->width(), this->height());
     updateGL();
@@ -506,16 +507,16 @@ void AVGLWidget::paintGL()
     glEnable(GL_DEPTH_TEST);
     if (m_lighting) // Shading with lighting
     {
-        drawModelShaded(m_LeftVMatrix);
+        drawModelShaded(m_leftVMatrix);
 
         if (m_lightsAreVisible) //Draw light representations
         {
-            drawLights(m_LeftVMatrix);
+            drawLights(m_leftVMatrix);
         }
     }
     else // Lighting off
     {
-        drawModelNoShading(m_LeftVMatrix);
+        drawModelNoShading(m_leftVMatrix);
     }
 
     // Paint overlay objects
@@ -533,22 +534,20 @@ void AVGLWidget::paintGL()
 
     // Set up the camera/view
     setupCamera(false);
-    //uncomment to check if stereo is on
-    //    if(formato.stereo()){cout << "On your right!" << endl;}
 
     glEnable(GL_DEPTH_TEST);
     if (m_lighting) // Shading with lighting
     {
-        drawModelShaded(m_RightVMatrix);
+        drawModelShaded(m_rightVMatrix);
 
         if (m_lightsAreVisible) //Draw light representations
         {
-            drawLights(m_RightVMatrix);
+            drawLights(m_rightVMatrix);
         }
     }
     else // Lighting off
     {
-        drawModelNoShading(m_RightVMatrix);
+        drawModelNoShading(m_rightVMatrix);
     }
 
     // Paint overlay objects
@@ -619,14 +618,14 @@ void AVGLWidget::setupCamera(boolean sizeIsLeft)
     {
         m_LeftCamPosition = QVector3D(-m_eyeSeparation/2, 0, m_camDistanceToOrigin);
         m_LeftCamPosition += m_camOrigin;
-        m_LeftVMatrix.setToIdentity();
-        m_LeftVMatrix.lookAt(m_LeftCamPosition, m_camOrigin, QVector3D(0, 1, 0));
+        m_leftVMatrix.setToIdentity();
+        m_leftVMatrix.lookAt(m_LeftCamPosition, m_camOrigin, QVector3D(0, 1, 0));
     }
     else{
         m_RightCamPosition = QVector3D(m_eyeSeparation/2, 0, m_camDistanceToOrigin);
         m_RightCamPosition += m_camOrigin;
-        m_RightVMatrix.setToIdentity();
-        m_RightVMatrix.lookAt(m_RightCamPosition, m_camOrigin, QVector3D(0, 1, 0));
+        m_rightVMatrix.setToIdentity();
+        m_rightVMatrix.lookAt(m_RightCamPosition, m_camOrigin, QVector3D(0, 1, 0));
     }
 }
 
@@ -775,7 +774,7 @@ void AVGLWidget::drawLightCircles(QMatrix4x4 l_vMatrix)
     m_coloringShaderP.release();
 }
 
-void AVGLWidget::drawOverlays(QPaintDevice *device, bool offscreen, int fboWidth )
+void AVGLWidget::drawOverlays(QPaintDevice *device, bool offscreen, int fboWidth)
 {
     QPainter painter(device);
     painter.setRenderHint(QPainter::Antialiasing);
@@ -793,16 +792,16 @@ void AVGLWidget::drawOverlays(QPaintDevice *device, bool offscreen, int fboWidth
     float offscreenFactor = 1.0f;
     if(offscreen) offscreenFactor = (float)fboWidth / (float)this->width();
 
-    // Light Numbering
-    if (m_lightsAreVisible && m_lighting)
-    {
-        for (int i = 0; i < 4; i++)
-        {
-            QVector3D lightPos((m_pMatrix * m_vMatrix) * (m_lights[i].getTransformation() * QVector3D(0,0,0)));
-            QPoint p(QVector3DUnnormalizedToQPoint(lightPos));
-            painter.drawText(QRectF(p.x()-10, p.y()-45, 30, 30), QString::number(i+1));
-        }
-    }
+//    // Light Numbering
+//    if (m_lightsAreVisible && m_lighting)
+//    {
+//        for (int i = 0; i < 4; i++)
+//        {
+//            QVector3D lightPos((m_pMatrix * m_vMatrixCurrent) * (m_lights[i].getTransformation() * QVector3D(0,0,0)));
+//            QPoint p(QVector3DUnnormalizedToQPoint(lightPos));
+//            painter.drawText(QRectF(p.x()-10, p.y()-45, 30, 30), QString::number(i+1));
+//        }
+//    }
 
 
     if (m_paintAnnotations)
@@ -852,7 +851,7 @@ void AVGLWidget::drawOverlays(QPaintDevice *device, bool offscreen, int fboWidth
         {
             //Draw lines from annotation to annotated feature
             QPoint start(140,40+i*135);
-            QVector3D end3D = (m_pMatrix * m_vMatrix * m_MatrixArtefact) * m_model->m_listOfPointClouds[i].points[0];
+            QVector3D end3D = (m_pMatrix * m_vMatrixCurrent * m_MatrixArtefact) * m_model->m_listOfPointClouds[i].points[0];
 
             QVector<QVector3D> points;
             points.push_back(QPointNormalizedToVector3D(start));
@@ -889,7 +888,7 @@ void AVGLWidget::drawOverlays(QPaintDevice *device, bool offscreen, int fboWidth
         // Annotated features (Points, Distances, Angles, Areas)
         for (int i=0; i < m_model->m_listOfPointClouds.size(); i++)
         {
-            m_singleColorShaderP.setUniformValue("mvpMatrix", m_pMatrix * m_vMatrix * m_MatrixArtefact);
+            m_singleColorShaderP.setUniformValue("mvpMatrix", m_pMatrix * m_vMatrixCurrent * m_MatrixArtefact);
             m_singleColorShaderP.setAttributeArray("vertex", m_model->m_listOfPointClouds[i].points.constData());
             m_singleColorShaderP.enableAttributeArray("vertex");
             QVector3D temp;
@@ -930,7 +929,7 @@ void AVGLWidget::drawOverlays(QPaintDevice *device, bool offscreen, int fboWidth
         // Paint a small rectangle around the selected point (if there is one)
         if (m_selectedPoint != -1)
         {
-            QPoint whiteSelect(QVector3DUnnormalizedToQPoint((m_pMatrix *m_vMatrix * m_MatrixArtefact) * m_model->m_listOfPointClouds.last().points[m_selectedPoint]));
+            QPoint whiteSelect(QVector3DUnnormalizedToQPoint((m_pMatrix *m_vMatrixCurrent * m_MatrixArtefact) * m_model->m_listOfPointClouds.last().points[m_selectedPoint]));
 
             //Draw Rectangles around selected point
             int rectSize = 4;
@@ -997,7 +996,6 @@ void AVGLWidget::drawOverlays(QPaintDevice *device, bool offscreen, int fboWidth
 
 
 
-
 void AVGLWidget::catchKP(AVHand mano)
 {
     lesstext++;
@@ -1018,13 +1016,14 @@ void AVGLWidget::catchKP(AVHand mano)
     {
         m_kLTr=true;
         //! commented out for vertical screen
-        //m_kInitialTr= QVector4D((qreal)mano.x,(qreal)mano.y,(qreal)mano.z, 1);
+        //m_kInitialTrPos= QVector4D((qreal)mano.x,(qreal)mano.y,(qreal)mano.z, 1);
         //!For horizontal screen, y and z coordinates are swapped
-        m_kInitialTr= QVector4D((qreal)-mano.x,(qreal)-mano.z,(qreal)mano.y, 1);
+        m_kInitialTrPos= QVector4D((qreal)-mano.x,(qreal)mano.z,(qreal)-mano.y, 1);
+        m_modelSize=m_model->getArtefactDepth(m_MatrixArtefact);
         cout<<"begin left translation at ("
-           <<m_kInitialTr.x()<< " , "
-          <<m_kInitialTr.y()<< " , "
-         <<m_kInitialTr.z()<< ")"
+           <<m_kInitialTrPos.x()<< " , "
+          <<m_kInitialTrPos.y()<< " , "
+         <<m_kInitialTrPos.z()<< ")"
         <<endl;    }
     //!if translation is off and kinect is watching and the signal is from the right hand, we begin to translate with right.
 
@@ -1032,13 +1031,14 @@ void AVGLWidget::catchKP(AVHand mano)
     {
         m_kRTr=true;
         //! commented out for vertical screen
-        //m_kInitialTr= QVector4D((qreal)mano.x,(qreal)mano.y,(qreal)mano.z, 1);
+        //m_kInitialTrPos= QVector4D((qreal)mano.x,(qreal)mano.y,(qreal)mano.z, 1);
         //!For horizontal screen, y and z coordinates are swapped
-        m_kInitialTr= QVector4D((qreal)-mano.x,(qreal)-mano.z,(qreal)mano.y, 1);
+        m_kInitialTrPos= QVector4D((qreal)-mano.x,(qreal)mano.z,(qreal)-mano.y, 1);
+        m_modelSize=m_model->getArtefactDepth(m_MatrixArtefact);
         cout<<"begin right translation at ("
-           <<m_kInitialTr.x()<< " , "
-          <<m_kInitialTr.y()<< " , "
-         <<m_kInitialTr.z()<< ")"
+           <<m_kInitialTrPos.x()<< " , "
+          <<m_kInitialTrPos.y()<< " , "
+         <<m_kInitialTrPos.z()<< ")"
         <<endl;
     }
 
@@ -1047,11 +1047,11 @@ void AVGLWidget::catchKP(AVHand mano)
     if(m_kinectIsWatching&&m_kLTr&&mano.isLeft)
     {
         //! commented out for vertical screen
-        //m_kNewTr= QVector4D((qreal)-mano.x,(qreal)mano.y,(qreal)mano.z, 1);
+        //m_kNewTrPos= QVector4D((qreal)-mano.x,(qreal)mano.y,(qreal)mano.z, 1);
 
         //!For horizontal screen, y and z coordinates are swapped
-        m_kNewTr= QVector4D((qreal)-mano.x,(qreal)mano.z,(qreal)-mano.y, 1);
-        m_kResTr=1000*(m_kInitialTr-m_kNewTr);
+        m_kNewTrPos= QVector4D((qreal)-mano.x,(qreal)mano.z,(qreal)-mano.y, 1);
+        m_kResTr=m_modelSize*(m_kInitialTrPos-m_kNewTrPos);
         if(lesstext%20==0)
             cout<<"Translating with left! moved by( "
                <<m_kResTr.x()<<" , "
@@ -1061,11 +1061,9 @@ void AVGLWidget::catchKP(AVHand mano)
 
         if(abs(m_kResTr.x())<50&&abs(m_kResTr.y())<50&&abs(m_kResTr.z())<50)
         {
-            m_pMatrix.translate(m_camPosition);
             m_pMatrix.translate(m_kResTr.toVector3D());
-            m_pMatrix.translate(-m_camPosition);
         }
-        m_kInitialTr=m_kNewTr;
+        m_kInitialTrPos=m_kNewTrPos;
         if(m_kROC==0||m_kLCC==0)
         {
             m_kLTr=false;
@@ -1079,11 +1077,12 @@ void AVGLWidget::catchKP(AVHand mano)
     if(m_kinectIsWatching&&m_kRTr&&!mano.isLeft)
     {
         //! commented out for vertical screen
-        //m_kNewTr= QVector4D((qreal)-mano.x,(qreal)mano.y,(qreal)mano.z, 1);
+        //m_kNewTrPos= QVector4D((qreal)-mano.x,(qreal)mano.y,(qreal)mano.z, 1);
 
         //! For horizontal screen, y and z coordinates are swapped
-        m_kNewTr= QVector4D((qreal)-mano.x,(qreal)-mano.z,(qreal)mano.y, 1);
-        m_kResTr=1000*(m_kInitialTr-m_kNewTr);
+        m_kNewTrPos= QVector4D((qreal)-mano.x,(qreal)mano.z,(qreal)-mano.y, 1);
+        m_kResTr=m_modelSize*(m_kInitialTrPos-m_kNewTrPos);
+        m_axis = m_MatrixArtefact.inverted().mapVector(m_kResTr.toVector3D());
         if(lesstext%20==0)
             cout<<"Translating with right! moved by ("
                <<m_kResTr.x()<<" , "
@@ -1092,12 +1091,9 @@ void AVGLWidget::catchKP(AVHand mano)
             <<endl;
 
         if(abs(m_kResTr.x())<50&&abs(m_kResTr.y())<50&&abs(m_kResTr.z())<50){
-            m_MatrixArtefact.translate(m_model->m_centerPoint);
-            m_MatrixArtefact.translate(m_kResTr.toVector3D());
-            m_MatrixArtefact.translate(-m_model->m_centerPoint);
-
+            m_MatrixArtefact.translate(m_axis);
         }
-        m_kInitialTr=m_kNewTr;
+        m_kInitialTrPos=m_kNewTrPos;
         if(m_kLOC==0||m_kRCC==0)
         {
             m_kRTr=false;
@@ -1114,16 +1110,16 @@ void AVGLWidget::catchKP(AVHand mano)
         m_kLTr=false;
         if(mano.isLeft&&!lRotInit){
             //save position for the left hand
-            m_kNewLeftRot=QVector3D((qreal)mano.x,(qreal)mano.y,(qreal)mano.z);
-            m_kOldLeftRot=m_kNewLeftRot;
+            m_kNewLeftRotPos=QVector3D((qreal)mano.x,(qreal)-mano.z,(qreal)mano.y);
+            m_kOldLeftRotPos=m_kNewLeftRotPos;
             lRotInit=true;
             m_kRCC=1;
             cout<<"Initialized left 3D Rotation"<<endl;
         }
         if(!mano.isLeft&&!rRotInit){
             //save position for the right hand
-            m_kNewRightRot=QVector3D((qreal)mano.x,-(qreal)mano.y,(qreal)mano.z);
-            m_kOldRightRot=m_kNewRightRot;
+            m_kNewRightRotPos=QVector3D((qreal)mano.x,(qreal)-mano.z,(qreal)mano.y);
+            m_kOldRightRotPos=m_kNewRightRotPos;
             rRotInit=true;
             m_kLCC=1;
             cout<<"Initialized right 3D Rotation"<<endl;
@@ -1134,7 +1130,7 @@ void AVGLWidget::catchKP(AVHand mano)
     {
         m_kRot=true;
         //draw the old line
-        m_kOldRotVec=m_kOldRightRot-m_kOldLeftRot;
+        m_kOldRotVec=m_kOldRightRotPos-m_kOldLeftRotPos;
         lRotInit=false;
         rRotInit=false;
         cout<<"Initialized 3D Rotation"<<endl;
@@ -1145,38 +1141,32 @@ void AVGLWidget::catchKP(AVHand mano)
         //refresh hand positions
         if(!mano.isLeft)
         {
-            m_kNewRightRot=QVector3D((qreal)mano.x,-(qreal)mano.y,(qreal)mano.z);
+            m_kNewRightRotPos=QVector3D((qreal)mano.x,(qreal)-mano.z,(qreal)mano.y);
         }
         if(mano.isLeft)
         {
-            m_kNewLeftRot=QVector3D((qreal)mano.x,-(qreal)mano.y,(qreal)mano.z);
+            m_kNewLeftRotPos=QVector3D((qreal)mano.x,(qreal)-mano.z,(qreal)mano.y);
         }
         //draw new rotation line
-        m_kNewRotVec=m_kNewRightRot-m_kNewLeftRot;
+        m_kNewRotVec=m_kNewRightRotPos-m_kNewLeftRotPos;
         //rotate by axis and angle
         if(acos(QVector3D::dotProduct(m_kOldRotVec.normalized(),m_kNewRotVec.normalized()))* 180.0 / PI<30||
                 acos(QVector3D::dotProduct(m_kOldRotVec.normalized(),m_kNewRotVec.normalized()))* 180.0 / PI>330)
         {
             m_MatrixArtefact.translate(m_model->m_centerPoint);
             m_MatrixArtefact.translate(m_camOrigin);
+            m_axis = QVector3D::crossProduct(m_kOldRotVec.normalized(),m_kNewRotVec.normalized());
+            m_axis = m_MatrixArtefact.inverted().mapVector(m_axis);
             m_MatrixArtefact.rotate(acos(QVector3D::dotProduct(m_kOldRotVec.normalized(),m_kNewRotVec.normalized()))* 180.0f / PI,
-                                    m_YZInverter*(QVector3D::crossProduct(m_kOldRotVec.normalized(),m_kNewRotVec.normalized())));
+                                    m_axis.normalized());
             m_MatrixArtefact.translate(-m_camOrigin);
             m_MatrixArtefact.translate(-m_model->m_centerPoint);
         }
 
-        //        cout<<"rotating by "
-        //           <<acos(QVector3D::dotProduct(m_kOldRotVec.normalized(),m_kNewRotVec.normalized()))* 180.0 / PI
-        //            <<" around the axis: ("
-        //            <<(QVector3D::crossProduct(m_kOldRotVec,m_kNewLeftRot)).x()<<" , "
-        //           <<(QVector3D::crossProduct(m_kOldRotVec,m_kNewLeftRot)).y()<<" , "
-        //          <<(QVector3D::crossProduct(m_kOldRotVec,m_kNewLeftRot)).z()<<" )."
-        //             <<endl;
-
         updateGL();
         //update hand positions and connection vector
-        m_kOldLeftRot=m_kNewLeftRot;
-        m_kOldRightRot=m_kNewRightRot;
+        m_kOldLeftRotPos=m_kNewLeftRotPos;
+        m_kOldRightRotPos=m_kNewRightRotPos;
         m_kOldRotVec=m_kNewRotVec;
 
         if(m_kLCC==0||m_kRCC==0)
@@ -1190,6 +1180,83 @@ void AVGLWidget::catchKP(AVHand mano)
         }
 
     }
+
+    //Lasso moves
+    if(!m_kScale&&m_kinectIsWatching
+            &&((m_kLLC>2&&m_kRLC==2)||(m_kLLC==2&&m_kRLC>2)))
+    {
+        if(mano.isLeft&&!lScaleInit){
+            //save position for the left hand
+            m_kNewLeftScalePos=QVector3D((qreal)mano.x,(qreal)-mano.z,(qreal)mano.y);
+            m_kOldLeftScalePos=m_kNewLeftScalePos;
+            lScaleInit=true;
+            m_kRLC=1;
+            cout<<"Initialized left 3D Scalation"<<endl;
+        }
+        if(!mano.isLeft&&!rScaleInit){
+            //save position for the right hand
+            m_kNewRightScalePos=QVector3D((qreal)mano.x,(qreal)-mano.z,(qreal)mano.y);
+            m_kOldRightScalePos=m_kNewRightScalePos;
+            rScaleInit=true;
+            m_kLLC=1;
+            cout<<"Initialized right 3D Scalation"<<endl;
+        }
+    }
+    if(lScaleInit&&rScaleInit&&!m_kScale)
+    {
+        m_kScale=true;
+        //draw the old line
+        m_kOldScaleDist=m_kOldRightScalePos.distanceToPoint(m_kOldLeftScalePos);
+        lScaleInit=false;
+        rScaleInit=false;
+        cout<<"Initialized 3D Scalation"<<endl;
+    }
+
+    if(m_kScale){
+
+        //refresh hand positions
+        if(!mano.isLeft)
+        {
+            m_kNewRightScalePos=QVector3D((qreal)mano.x,(qreal)-mano.z,(qreal)mano.y);
+        }
+        if(mano.isLeft)
+        {
+            m_kNewLeftScalePos=QVector3D((qreal)mano.x,(qreal)-mano.z,(qreal)mano.y);
+        }
+        //draw new Scalation line
+        m_kNewScaleDist=m_kNewRightScalePos.distanceToPoint(m_kNewLeftScalePos);
+        //Scalate by axis and angle
+        if(m_kOldScaleDist/m_kNewScaleDist<1.5f &&
+                m_kOldScaleDist/m_kNewScaleDist>0.75f)
+        {
+            m_MatrixArtefact.translate(m_model->m_centerPoint);
+            m_MatrixArtefact.translate(m_camOrigin);
+            m_MatrixArtefact.scale(m_kNewScaleDist/m_kOldScaleDist);
+            cout<<"scaled by "<<100*m_kNewScaleDist/m_kOldScaleDist<<endl;
+            m_MatrixArtefact.translate(-m_camOrigin);
+            m_MatrixArtefact.translate(-m_model->m_centerPoint);
+        }
+        else{
+        cout<<"did NOT scale because factor is "<< m_kOldScaleDist/m_kNewScaleDist<<endl;
+        }
+        updateGL();
+        //update hand positions and connection vector
+        m_kOldLeftScalePos=m_kNewLeftScalePos;
+        m_kOldRightScalePos=m_kNewRightScalePos;
+        m_kOldScaleDist=m_kNewScaleDist;
+
+        if(m_kLLC==0||m_kRLC==0)
+        {
+            m_kScale=false;
+            m_kRTr=false;
+            m_kLTr=false;
+            lScaleInit=false;
+            rScaleInit=false;
+            cout<<"stopped 3D Scaling"<<endl;
+        }
+
+    }
+
 
     if(m_kLNTC>5&&m_kRNTC>5){
         if(lesstext%1000==0)
@@ -1228,6 +1295,7 @@ void AVGLWidget::kinectCount(AVHand mano){
         m_kLCC=0;
         m_kLUC=0;
         m_kLNTC=0;
+        m_kLLC=0;
     }
     if(mano.hState==3&&mano.isLeft==true){
         //        cout<<"Left hand is closed since "<<m_kLCC<<endl;
@@ -1255,6 +1323,7 @@ void AVGLWidget::kinectCount(AVHand mano){
         m_kRCC=0;
         m_kRUC=0;
         m_kRNTC=0;
+        m_kRLC=0;
 
     }
     if(mano.hState==3&&mano.isLeft==false){
@@ -1458,7 +1527,7 @@ void AVGLWidget::catchPF(AVPointFrame pFrame)
                     if(m_tRotL2.angleTo(m_tRotL1)>300)
                     {
                         m_MatrixArtefact.translate(m_model->m_centerPoint);
-                        m_MatrixArtefact.rotate(-m_tRotL2.angleTo(m_tRotL1),QVector3D(0,0,-1));
+                        m_MatrixArtefact.rotate(-m_tRotL2.angleTo(m_tRotL1),m_MatrixArtefact.inverted().mapVector(QVector3D(0,0,1)));
                         m_MatrixArtefact.translate(-m_model->m_centerPoint);
                         //                       cout<<"rotated counterclockwise by "<<m_tRotL2.angleTo(m_tRotL1)
                         //                          <<" degrees around ("<<((m_tRot1+m_tRot2)/2).x()
@@ -1468,13 +1537,10 @@ void AVGLWidget::catchPF(AVPointFrame pFrame)
                     if(m_tRotL2.angleTo(m_tRotL1)<60)
                     {
                         m_MatrixArtefact.translate(m_model->m_centerPoint);
-                        m_MatrixArtefact.rotate(m_tRotL2.angleTo(m_tRotL1),QVector3D(0,0,1));
+                        m_MatrixArtefact.translate(m_camOrigin);
+                        m_MatrixArtefact.rotate(m_tRotL2.angleTo(m_tRotL1),m_MatrixArtefact.inverted().mapVector(QVector3D(0,0,-1)));
+                        m_MatrixArtefact.translate(-m_camOrigin);
                         m_MatrixArtefact.translate(-m_model->m_centerPoint);
-
-                        //                       cout<<"rotated clockwise by "<<m_tRotL2.angleTo(m_tRotL1)
-                        //                          <<" degrees around ("<<((m_tRot1+m_tRot2)/2).x()
-                        //                         <<" , " <<((m_tRot1+m_tRot2)/2).y()<<")."
-                        //                         <<endl;
                     }
                     //refresh touch rotation line
                     m_tRotL1=m_tRotL2;
@@ -1652,7 +1718,7 @@ void AVGLWidget::mousePressEvent(QMouseEvent *event)
         {
             for (int i=0; i < m_model->m_listOfPointClouds.last().points.size(); i++)
             {
-                QVector3D projectedPoint(m_pMatrix*m_vMatrix*m_MatrixArtefact*m_model->m_listOfPointClouds.last().points[i]);
+                QVector3D projectedPoint(m_pMatrix*m_vMatrixCurrent*m_MatrixArtefact*m_model->m_listOfPointClouds.last().points[i]);
                 int unNormalizedX = (projectedPoint.x() + 1) / 2 * this->width();
                 int unNormalizedY = (-projectedPoint.y()+ 1) / 2 * this->height();
                 float distance = 0.0;
@@ -1664,7 +1730,7 @@ void AVGLWidget::mousePressEvent(QMouseEvent *event)
                     m_draggedPoint = m_selectedPoint = i;
                     emit pointSelected();
                     QVector3D intersectionPoint;
-                    getIntersectionPoint(QPoint(event->x(), event->y()), &intersectionPoint,m_vMatrix);
+                    getIntersectionPoint(QPoint(event->x(), event->y()), &intersectionPoint,m_vMatrixCurrent);
                     if (!intersectionPoint.isNull())
                     {
                         m_model->m_listOfPointClouds.last().points[m_draggedPoint] = (m_MatrixArtefact.inverted() * intersectionPoint);
@@ -1678,7 +1744,7 @@ void AVGLWidget::mousePressEvent(QMouseEvent *event)
         if(!clickFound && m_lightsAreVisible)
         {
             int lightClickedIndex = -1;
-            bool lightClicked = getClickedLight(QPoint(event->x(), event->y()), &lightClickedIndex,m_vMatrix);
+            bool lightClicked = getClickedLight(QPoint(event->x(), event->y()), &lightClickedIndex,m_vMatrixCurrent);
             if(lightClicked){
                 qDebug() << "found click on light: " << lightClickedIndex;
                 AVMainWindow* mainWindow = AVMainWindow::instance();
@@ -1694,7 +1760,7 @@ void AVGLWidget::mousePressEvent(QMouseEvent *event)
             //TODO: Speed up with Bounding Box Test
             QVector3D intersectionPoint;
 
-            getIntersectionPoint(QPoint(event->x(), event->y()), &intersectionPoint, m_vMatrix);
+            getIntersectionPoint(QPoint(event->x(), event->y()), &intersectionPoint, m_vMatrixCurrent);
             if (!intersectionPoint.isNull())
             {
                 m_model->m_listOfPointClouds.last().points.append(m_MatrixArtefact.inverted() * intersectionPoint);
@@ -1735,7 +1801,7 @@ void AVGLWidget::mouseMoveEvent(QMouseEvent *event)
         if (m_draggedPoint != -1)
         {
             QVector3D intersectionPoint;
-            getIntersectionPoint(QPoint(event->x(), event->y()), &intersectionPoint,m_vMatrix);
+            getIntersectionPoint(QPoint(event->x(), event->y()), &intersectionPoint,m_vMatrixCurrent);
             if (!intersectionPoint.isNull())
             {
                 m_model->m_listOfPointClouds.last().points[m_draggedPoint] = (m_MatrixArtefact.inverted() * intersectionPoint);
@@ -1923,20 +1989,20 @@ QPointF AVGLWidget::pixelPosToViewPos(const QPointF& p)
 //! Returns the current mvpMatrix
 QMatrix4x4 AVGLWidget::getMvpMatrix()
 {
-    return m_pMatrix * m_vMatrix * m_MatrixArtefact;
+    return m_pMatrix * m_vMatrixCurrent * m_MatrixArtefact;
 }
 
 //! Returns the current LeftMvpMatrix
 QMatrix4x4 AVGLWidget::getLeftMvpMatrix()
 {
-    return m_pMatrix * m_LeftVMatrix * m_MatrixArtefact;
+    return m_pMatrix * m_leftVMatrix * m_MatrixArtefact;
 }
 
 
 //! Returns the current RightMvpMatrix
 QMatrix4x4 AVGLWidget::getRightMvpMatrix()
 {
-    return m_pMatrix * m_RightVMatrix * m_MatrixArtefact;
+    return m_pMatrix * m_rightVMatrix * m_MatrixArtefact;
 }
 
 

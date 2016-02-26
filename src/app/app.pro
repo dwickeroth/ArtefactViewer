@@ -29,7 +29,6 @@ SOURCES +=\
     avlight.cpp \
     AVKinector.cpp \
     AVPQReader.cpp \
-    BodyBasics.cpp \
     Kinector.cpp \
     avmainwindow.cpp
 

@@ -152,7 +152,7 @@ private:
     void drawBackground();
     void setupCamera(boolean sizeIsLeft);
     void drawModelShaded(QMatrix4x4 l_vMatrix);
-    void drawModelNoShading(QMatrix4x4 vMatrix);
+    void drawModelNoShading(QMatrix4x4 l_vMatrix);
     void drawLights(QMatrix4x4 vMatrix);
     void drawLightCircles(QMatrix4x4 l_vMatrix);
     void drawOverlays(QPaintDevice* device, bool offscreen = false, int fboWidth = 0);
@@ -175,12 +175,15 @@ private:
     bool        m_kRTr; //!Kinect right Traslation on
     bool        m_kLTr; //!Kinect right Traslation on
     bool        m_kRot; //! Kinect Rotation on
+    bool        m_kScale; //! Kinect lasso Scaling on
 
 
     double      m_camDistanceToOrigin;
+    double      m_modelSize;
 
 
     QPoint      m_lastMousePosition;
+    QString     m_status;
 
     QVector3D   m_camOrigin;
     QVector3D   m_camPosition;
@@ -188,18 +191,25 @@ private:
     QVector3D   m_RightCamPosition;
     QVector3D   m_backgroundColor1;
     QVector3D   m_backgroundColor2;
+    QVector3D   m_axis;
 
-    QVector4D   m_kInitialTr;//! Kinect Translation start point
-    QVector4D   m_kNewTr;//! Kinect Translation update point
+    QVector4D   m_kInitialTrPos;//! Kinect Translation start point
+    QVector4D   m_kNewTrPos;//! Kinect Translation update point
     QVector4D   m_kResTr;//! Kinect Translation result
 
-    QVector3D   m_kNewLeftRot;  //!Kinect Rotation update point
-    QVector3D   m_kOldLeftRot;  //!Kinect Rotation start point
-    QVector3D   m_kNewRightRot;  //!Kinect Rotation update point
-    QVector3D   m_kOldRightRot;  //!Kinect Rotation start point
+    QVector3D   m_kNewLeftRotPos;  //!Kinect Rotation update point
+    QVector3D   m_kOldLeftRotPos;  //!Kinect Rotation start point
+    QVector3D   m_kNewRightRotPos;  //!Kinect Rotation update point
+    QVector3D   m_kOldRightRotPos;  //!Kinect Rotation start point
     QVector3D   m_kNewRotVec; //!Kinect Old Rotation Vector
     QVector3D   m_kOldRotVec; //!Kinect Old Rotation Vector
 
+    QVector3D   m_kNewLeftScalePos;  //!Kinect Scaling update point
+    QVector3D   m_kOldLeftScalePos;  //!Kinect Scaling start point
+    QVector3D   m_kNewRightScalePos;  //!Kinect Scaling update point
+    QVector3D   m_kOldRightScalePos;  //!Kinect Scaling start point
+    float   m_kNewScaleDist; //!Kinect Old Scaling distance
+    float   m_kOldScaleDist; //!Kinect Old Scaling distance
 
     //private members without getters/setters
     double      m_eyeSeparation;
@@ -207,6 +217,8 @@ private:
     bool        rotating;
     bool        lRotInit;
     bool        rRotInit;
+    bool        lScaleInit;
+    bool        rScaleInit;
 
     unsigned int         m_kLUC; //! kinect unknown count
     unsigned int         m_kLNTC; //! kinect not tracked count
@@ -231,15 +243,14 @@ private:
     QVector<QPointF>      m_lastTouchPosition; //!list of last positions where the fingers were
 
     static const
-    int  m_jumpSize=40;
+    int         m_jumpSize=40;
     static const
-    int      m_zoomTolerance=1;
-    QMatrix4x4  m_YZInverter;
-
+    int         m_zoomTolerance=1;
     QMatrix4x4  m_pMatrix;
     QMatrix4x4  m_vMatrix;
-    QMatrix4x4  m_LeftVMatrix;
-    QMatrix4x4  m_RightVMatrix;
+    QMatrix4x4  m_leftVMatrix;
+    QMatrix4x4  m_rightVMatrix;
+    QMatrix4x4  m_vMatrixCurrent;
     QMatrix4x4  m_MatrixLights;
     QMatrix4x4  m_MatrixLightCircle;
 
