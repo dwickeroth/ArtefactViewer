@@ -1159,6 +1159,7 @@ void AVGLWidget::catchKP(AVHand mano)
             m_axis = m_MatrixArtefact.inverted().mapVector(m_axis);
             m_MatrixArtefact.rotate(acos(QVector3D::dotProduct(m_kOldRotVec.normalized(),m_kNewRotVec.normalized()))* 180.0f / PI,
                                     m_axis.normalized());
+            m_MatrixArtefact.scale(m_kNewRotVec.length()/m_kOldRotVec.length());
             m_MatrixArtefact.translate(-m_camOrigin);
             m_MatrixArtefact.translate(-m_model->m_centerPoint);
         }
