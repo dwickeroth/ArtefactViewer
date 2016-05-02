@@ -3,8 +3,9 @@
 #include <iostream>
 #include "stdafx.h"
 #include "avhand.h"
+#include "avmainwindow.h"
+#include "avglwidget.h"
 using namespace std;
-
 //AVKinector* AVKinector::m_instance = 0;
 int kinerror=0;
 int counters=0;
@@ -12,7 +13,7 @@ AVKinector::AVKinector(QObject *parent)
 {
     m_activated=true;
 //    InitializeDefaultSensor();
-    cout<<"AVKinector on, setting priority to lowest"<<endl;
+//    cout<<"AVKinector on, setting priority to lowest"<<endl;
 //    QThread::currentThread()->setPriority(QThread::LowestPriority);
 //    run();
 //    cout<<"requested first run from initialization"<<endl;
@@ -49,26 +50,28 @@ HRESULT AVKinector::InitializeDefaultSensor()
 
         if (SUCCEEDED(hr))
         {
-            cout<<"kinect sensor is open"<<endl;
+//            cout<<"kinect sensor is open"<<endl;
             hr = m_pKinectSensor->get_CoordinateMapper(&m_pCoordinateMapper);
         }
 
         if (SUCCEEDED(hr))
         {
-            cout<<"got coordinate mapper"<<endl;
+//            cout<<"got coordinate mapper"<<endl;
 
             hr = m_pKinectSensor->get_BodyFrameSource(&pBodyFrameSource);
             if(SUCCEEDED(pBodyFrameSource->get_IsActive(&active)))
-                cout<<"Frame source is active"<<endl;
+//                cout<<"Frame source is active"<<endl;
             if(SUCCEEDED(pBodyFrameSource->get_BodyCount(&count)))
-                cout<<"body count is "<<(int)count<<endl;
+//                cout<<"body count is "<<(int)count<<endl;
+                cout<<"";
         }
 
         if (SUCCEEDED(hr))
         {
             hr = pBodyFrameSource->OpenReader(&m_pBodyFrameReader);
             if(SUCCEEDED(m_pBodyFrameReader->put_IsPaused(false)))
-            cout<<"Body Frame reader is open and unpaused"<<endl;
+                cout<<"";
+//            cout<<"Body Frame reader is open and unpaused"<<endl;
         }
 
     }

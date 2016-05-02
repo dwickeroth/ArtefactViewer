@@ -49,7 +49,6 @@ HEADERS  += avmainwindow.h \
     AVPQReader.h \
     AVTouchPoint.h \
     BodyBasics.h \
-    resource.h \
     stdafx.h \
     avhand.h
 

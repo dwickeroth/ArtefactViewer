@@ -24,8 +24,10 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 #include <QtGui>
 #include <QtOpenGL>
 #include <QDebug>
-#include <QWheelEvent>
 #include <QDesktopWidget>
+#include <QWheelEvent>
+#include <QStatusBar>
+#include <QToolBar>
 #define PI 3.14159265
 #include "math.h"
 #include "AVKinector.h"
@@ -37,6 +39,7 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 #include "avpointframe.h"
 #include "iostream"
 #include "kinect.h"
+#include "ui_avmainwindow.h"
 
 using namespace std;
 int lesstext=0;
@@ -46,7 +49,14 @@ AVGLWidget::AVGLWidget(QWidget *parent) : QGLWidget(QGLFormat(QGL::SampleBuffers
     m_model = AVModel::instance();
     m_pMatrix.setToIdentity();
     m_model->setupLightGeometry();
-    //    m_kinect= AVKinector::instance();
+    AVMainWindow::instance()->statusBar()->showMessage(
+                "Please hold both hands open,facing the Kinect camera and away from your body",0);
+//    Ui::AVMainWindow->toolBar;
+//    AVStatus=AVMainWindow::instance()->statusBar();
+//    AVMainWindow::ui->toolBar->addWidget(AVStatus);
+//    AVMainWindow::ui->toolBar->setGeometry(0,30,this->width(),30);
+//    AVStatus->showMessage(m_status,0);
+    AVMainWindow::instance()->statusBar()->setGeometry(0,30,this->width(),30);
     QGLFormat stereoFormat;
     stereoFormat.setSampleBuffers(true);
     stereoFormat.setStereo(true);
@@ -62,8 +72,11 @@ AVGLWidget::AVGLWidget(QWidget *parent) : QGLWidget(QGLFormat(QGL::SampleBuffers
     m_kLTr=false;
     m_kRTr=false;
     m_kRot=false;
+    m_kScale=false;
     lRotInit=false;
     rRotInit=false;
+    lScaleInit=false;
+    rScaleInit=false;
     m_kLUC=0;
     m_kLNTC=0;
     m_kRUC=0;
@@ -1005,7 +1018,9 @@ void AVGLWidget::catchKP(AVHand mano)
     //!if both hands have been open for more than 3 seconds, kinect starts watching
 
     if(m_kLOC>5&&m_kROC>5&&!m_kinectIsWatching){
-        cout<<"Started reading"<<endl;
+//        cout<<"Started reading"<<endl;
+        m_status="Started reading";
+        m_BigChange=true;
         m_kinectIsWatching=true;
         return;
     }
@@ -1020,12 +1035,16 @@ void AVGLWidget::catchKP(AVHand mano)
         //!For horizontal screen, y and z coordinates are swapped
         m_kInitialTrPos= QVector4D((qreal)-mano.x,(qreal)mano.z,(qreal)-mano.y, 1);
         m_modelSize=m_model->getArtefactDepth(m_MatrixArtefact);
-        cout<<"begin left translation at ("
-           <<m_kInitialTrPos.x()<< " , "
-          <<m_kInitialTrPos.y()<< " , "
-         <<m_kInitialTrPos.z()<< ")"
-        <<endl;    }
-    //!if translation is off and kinect is watching and the signal is from the right hand, we begin to translate with right.
+//        cout<<"begin left translation at ("
+//           <<m_kInitialTrPos.x()<< " , "
+//          <<m_kInitialTrPos.y()<< " , "
+//         <<m_kInitialTrPos.z()<< ")"
+//        <<endl;
+
+        m_status="Perspective translation initialized";
+    }
+        m_BigChange=true;
+        //!if translation is off and kinect is watching and the signal is from the right hand, we begin to translate with right.
 
     if( !m_kRTr&&(m_kinectIsWatching&&((m_kLOC>2&&m_kRCC==2)&&!mano.isLeft)))
     {
@@ -1035,11 +1054,13 @@ void AVGLWidget::catchKP(AVHand mano)
         //!For horizontal screen, y and z coordinates are swapped
         m_kInitialTrPos= QVector4D((qreal)-mano.x,(qreal)mano.z,(qreal)-mano.y, 1);
         m_modelSize=m_model->getArtefactDepth(m_MatrixArtefact);
-        cout<<"begin right translation at ("
-           <<m_kInitialTrPos.x()<< " , "
-          <<m_kInitialTrPos.y()<< " , "
-         <<m_kInitialTrPos.z()<< ")"
-        <<endl;
+//        cout<<"begin right translation at ("
+//           <<m_kInitialTrPos.x()<< " , "
+//          <<m_kInitialTrPos.y()<< " , "
+//         <<m_kInitialTrPos.z()<< ")"
+//        <<endl;
+        m_status="Object translation initialized";
+        m_BigChange=true;
     }
 
     //!if kinect is watching and left (projection) translation is on and the signal is from the left hand, we translate with left.
@@ -1067,7 +1088,9 @@ void AVGLWidget::catchKP(AVHand mano)
         if(m_kROC==0||m_kLCC==0)
         {
             m_kLTr=false;
-            cout<<"stopped translation left"<<endl;
+//            cout<<"stopped translation left"<<endl;
+            m_status="stopped perspective translation";
+            m_BigChange=true;
         }
         updateGL();
     }
@@ -1097,7 +1120,9 @@ void AVGLWidget::catchKP(AVHand mano)
         if(m_kLOC==0||m_kRCC==0)
         {
             m_kRTr=false;
-            cout<<"stopped translation right"<<endl;
+//            cout<<"stopped translation right"<<endl;
+            m_status="stopped object translation";
+            m_BigChange=true;
         }
         updateGL();
     }
@@ -1133,7 +1158,9 @@ void AVGLWidget::catchKP(AVHand mano)
         m_kOldRotVec=m_kOldRightRotPos-m_kOldLeftRotPos;
         lRotInit=false;
         rRotInit=false;
-        cout<<"Initialized 3D Rotation"<<endl;
+//        cout<<"Initialized 3D Rotation"<<endl;
+        m_status="Initialized 3D Rotation and Scaling";
+        m_BigChange=true;
     }
 
     if(m_kRot){
@@ -1177,7 +1204,9 @@ void AVGLWidget::catchKP(AVHand mano)
             m_kLTr=false;
             lRotInit=false;
             rRotInit=false;
-            cout<<"stopped 3D Rotation"<<endl;
+//            cout<<"stopped 3D Rotation"<<endl;
+            m_status="stopped 3D Rotation and Scaling";
+            m_BigChange=true;
         }
 
     }
@@ -1200,7 +1229,7 @@ void AVGLWidget::catchKP(AVHand mano)
             m_kOldRightScalePos=m_kNewRightScalePos;
             rScaleInit=true;
             m_kLLC=1;
-            cout<<"Initialized right 3D Scalation"<<endl;
+            cout<<"Initialized right 3D Scaling"<<endl;
         }
     }
     if(lScaleInit&&rScaleInit&&!m_kScale)
@@ -1210,7 +1239,9 @@ void AVGLWidget::catchKP(AVHand mano)
         m_kOldScaleDist=m_kOldRightScalePos.distanceToPoint(m_kOldLeftScalePos);
         lScaleInit=false;
         rScaleInit=false;
-        cout<<"Initialized 3D Scalation"<<endl;
+//        cout<<"Initialized 3D Scalation"<<endl;
+        m_status="Initialized 3D Scaling";
+        m_BigChange=true;
     }
 
     if(m_kScale){
@@ -1253,13 +1284,17 @@ void AVGLWidget::catchKP(AVHand mano)
             m_kLTr=false;
             lScaleInit=false;
             rScaleInit=false;
-            cout<<"stopped 3D Scaling"<<endl;
+//            cout<<"stopped 3D Scaling"<<endl;
+            m_status="stopped 3D Scaling";
+            m_BigChange=true;
         }
 
     }
 
 
     if(m_kLNTC>5&&m_kRNTC>5){
+        m_status="Stopped reading";
+        m_BigChange=true;
         if(lesstext%1000==0)
             cout<<"Stopped reading, both hands untracked for more than 5s"<<endl;
         m_kinectIsWatching=false;
@@ -1276,6 +1311,9 @@ void AVGLWidget::catchKP(AVHand mano)
         m_kRUC=0;
     }
     AVGLWidget::kinectCount(mano);
+    if(m_BigChange)
+    AVMainWindow::instance()->statusBar()->showMessage(m_status,0);
+    m_BigChange=false;
 }
 
 void AVGLWidget::kinectCount(AVHand mano){
@@ -1306,7 +1344,7 @@ void AVGLWidget::kinectCount(AVHand mano){
         m_kLNTC=0;
     }
     if(mano.hState==4&&mano.isLeft==true){
-        //        cout<<"Left ONE IN A MILLION! Hand is Lasso since "<<m_kLLC<<endl;
+        //        cout<<"Left Hand is Lasso since "<<m_kLLC<<endl;
         m_kLLC++;
     }
     if(mano.hState==0&&mano.isLeft==false){
@@ -1335,7 +1373,7 @@ void AVGLWidget::kinectCount(AVHand mano){
         m_kRNTC=0;
     }
     if(mano.hState==4&&mano.isLeft==false){
-        //        cout<<"Right ONE IN A MILLION! Hand is Lasso since "<<m_kRLC<<endl;
+        //        cout<<"Right Hand is Lasso since "<<m_kRLC<<endl;
         m_kRLC++;
     }
 

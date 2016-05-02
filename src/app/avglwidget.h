@@ -27,13 +27,16 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 #include <QGLShaderProgram>
 #include <QGLBuffer>
 #include <QGLFunctions>
+#include <QToolBar>
+#include <QStatusBar>
 
 #include "avhand.h"
 #include "AVKinector.h"
 #include "avlight.h"
+#include "avmainwindow.h"
+#include "avpointframe.h"
 #include "avtrackball.h"
 #include "avtouchpoint.h"
-#include "avpointframe.h"
 
 class AVModel;
 class AVTrackBall;
@@ -50,7 +53,8 @@ public:
     AVTrackBall*  m_trackball;
     AVModel*    m_model;
     AVKinector* m_kinect;
-
+    QStatusBar*  AVStatus;
+    AVMainWindow* m_MainWindow;
     void    initialize();
 
     QVector<AVLight> m_lights;
@@ -172,6 +176,7 @@ private:
     bool        m_paintAnnotations;
 
     bool        m_kinectIsWatching;
+    bool        m_BigChange;
     bool        m_kRTr; //!Kinect right Traslation on
     bool        m_kLTr; //!Kinect right Traslation on
     bool        m_kRot; //! Kinect Rotation on
@@ -183,6 +188,7 @@ private:
 
 
     QPoint      m_lastMousePosition;
+    QToolBar*    m_toolbar;
     QString     m_status;
 
     QVector3D   m_camOrigin;

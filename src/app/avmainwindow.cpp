@@ -1,6 +1,5 @@
 #include "avmainwindow.h"
 #include "ui_avmainwindow.h"
-
 #include "avabout.h"
 #include "avmodel.h"
 #include "avglwidget.h"
@@ -9,6 +8,7 @@
 #include "avcontroller.h"
 #include "avoffscreendialog.h"
 #include "avpqreader.h"
+
 
 #include <QKeyEvent>
 #include <QMessageBox>
@@ -128,17 +128,21 @@ void AVMainWindow::keyPressEvent(QKeyEvent *e)
         on_pushButton_clock_clicked();
     }
 //keyboard shortcuts
-    if(k_Ctrl&&e->key()==Qt::Key_F)
+    if(k_Ctrl&&e->key()==Qt::Key_F)//fullscreen
         on_actionFullscreen_triggered();
-    if(k_Ctrl&&e->key()==Qt::Key_O)
+    if(k_Ctrl&&e->key()==Qt::Key_O)//open
         on_actionOpen_triggered();
-    if(k_Ctrl&&e->key()==Qt::Key_S)
+    if(k_Ctrl&&e->key()==Qt::Key_L)//lights
+        on_checkBox_lightingSwitch_toggled(true);
+    if(k_Ctrl&&e->key()==Qt::Key_S)//save
         on_actionSave_triggered();
-    if(k_Ctrl&&e->key()==Qt::Key_P)
+    if(k_Ctrl&&e->key()==Qt::Key_P)//screenshot
         on_actionScreenshot_triggered();
-    if(k_Ctrl&&e->key()==Qt::Key_M)
+    if(k_Ctrl&&e->key()==Qt::Key_M)//showCursor
       m_glWidget->setCursor(Qt::ArrowCursor);
-    if(k_Ctrl&&e->key()==Qt::Key_H)
+    if(k_Ctrl&&e->key()==Qt::Key_C)//color
+        on_checkBox_vertexColors_toggled(true);
+    if(k_Ctrl&&e->key()==Qt::Key_H)//hideCursor
         m_glWidget->setCursor(Qt::BlankCursor);
 }
 
@@ -222,6 +226,7 @@ void AVMainWindow::currentAnnotationChanged()
     ui->pushButton_delete->setEnabled(true);
     ui->pushButton_editAnnotation->setEnabled(true);
 }
+
 
 
 //! Makes the camera rotate upwards for the selected amount of degrees
