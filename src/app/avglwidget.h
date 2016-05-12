@@ -113,6 +113,12 @@ public:
     QMatrix4x4 getMatrixArtefact() const;
     void setMatrixArtefact(const QMatrix4x4 &matrixArtefact);
 
+    QMatrix4x4 getpMatrix() const;
+    void setpMatrix(const QMatrix4x4 &pmatrix);
+
+    void resetVMatrix();
+    void resetMatrixArtefact();
+
     QImage renderToOffscreenBuffer(int width, int height);
 
 
@@ -154,7 +160,7 @@ private:
     void catchEvent(AVTouchPoint &tPoint);
 
     void drawBackground();
-    void setupCamera(boolean sizeIsLeft);
+    void setupCamera(boolean eyeIsLeft);
     void drawModelShaded(QMatrix4x4 l_vMatrix);
     void drawModelNoShading(QMatrix4x4 l_vMatrix);
     void drawLights(QMatrix4x4 vMatrix);
@@ -176,7 +182,6 @@ private:
     bool        m_paintAnnotations;
 
     bool        m_kinectIsWatching;
-    bool        m_BigChange;
     bool        m_kRTr; //!Kinect right Traslation on
     bool        m_kLTr; //!Kinect right Traslation on
     bool        m_kRot; //! Kinect Rotation on
@@ -185,6 +190,8 @@ private:
 
     double      m_camDistanceToOrigin;
     double      m_modelSize;
+    double      m_kRotAngle;
+    double      m_zoomFactor;
 
 
     QPoint      m_lastMousePosition;
@@ -195,6 +202,7 @@ private:
     QVector3D   m_camPosition;
     QVector3D   m_LeftCamPosition;
     QVector3D   m_RightCamPosition;
+    QVector3D   m_camUpDirection;
     QVector3D   m_backgroundColor1;
     QVector3D   m_backgroundColor2;
     QVector3D   m_axis;
@@ -219,8 +227,15 @@ private:
 
     //private members without getters/setters
     double      m_eyeSeparation;
+    double      oldAngleLC;
+    double      oldAngleCR;
+    double      newAngleSign;
+    double      newAngleCR;
+    double      resultingAngle;
     bool        zooming;
+    bool        RotScaling;
     bool        rotating;
+    bool        spinning;
     bool        lRotInit;
     bool        rRotInit;
     bool        lScaleInit;
@@ -237,13 +252,29 @@ private:
     unsigned int         m_kRCC; //! kinect closed count
     unsigned int         m_kRLC; //! kinect lasso count
     unsigned int         m_slowDownTrackball; //!accumulates Touchscreen events when 3+fingers move
-    QPoint       m_iFP; //!initial finger position
+    QPointF       m_iFP; //!initial finger position
+    QPointF       m_nFP; //!new finger position
     QPointF      m_iZS; //!initial zoom separation
     QPointF      m_nZS; //!new zoom separation
     QPointF      m_tRot1; //! touch rotation point 1
     QPointF      m_tRot2; //! touch rotation point 2
+    QPointF      m_newAverageSpinnerLeft;
+    QPointF      m_oldAverageSpinnerLeft;
+    QPointF      m_newAverageSpinnerRight;
+    QPointF      m_oldAverageSpinnerRight;
     QLineF       m_tRotL1; //!touch rotation line 1
     QLineF       m_tRotL2; //!touch rotation line 2
+    QLineF       m_OldRightZoomer;
+    QLineF       m_OldLeftZoomer;
+    QLineF       m_NewRightZoomer;
+    QLineF       m_NewLeftZoomer;
+    QLineF       m_OldRightSpinner;
+    QLineF       m_OldLeftSpinner;
+    QLineF       m_OldCenterSpinner;
+    QLineF       m_NewCenterSpinner;
+    QLineF       m_NewRightSpinner;
+    QLineF       m_NewLeftSpinner;
+
 
 
     QVector<QPointF>      m_lastTouchPosition; //!list of last positions where the fingers were
@@ -252,11 +283,15 @@ private:
     int         m_jumpSize=40;
     static const
     int         m_zoomTolerance=1;
+    static const
+    int         m_speeder=10;
+    int         switcher;
     QMatrix4x4  m_pMatrix;
     QMatrix4x4  m_vMatrix;
     QMatrix4x4  m_leftVMatrix;
     QMatrix4x4  m_rightVMatrix;
     QMatrix4x4  m_vMatrixCurrent;
+    QMatrix4x4  m_camRotateMatrix;
     QMatrix4x4  m_MatrixLights;
     QMatrix4x4  m_MatrixLightCircle;
 

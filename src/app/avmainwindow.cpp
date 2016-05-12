@@ -34,6 +34,11 @@ AVMainWindow::AVMainWindow(QWidget *parent) :
     readPlyFile("../mesh/input_klein.ply");
     currentlyOpenFile = "input_klein";
      */
+
+    //    AVStatus=AVMainWindow::instance()->statusBar();
+    //    AVMainWindow::ui->toolBar->addWidget(AVStatus);
+    //    AVMainWindow::ui->toolBar->setGeometry(0,30,this->width(),30);
+    //    AVStatus->showMessage(m_status,0);
 }
 
 AVMainWindow::~AVMainWindow()
@@ -59,6 +64,8 @@ void AVMainWindow::setGLWidget(AVGLWidget *glWidget)
 
     initialize();
     m_glWidget->initialize();
+//    ui->toolBar->addWidget(AVMainWindow::instance()->statusBar());
+    ui->toolBar->addWidget(m_glWidget->AVStatus);
 
 }
 
@@ -128,8 +135,12 @@ void AVMainWindow::keyPressEvent(QKeyEvent *e)
         on_pushButton_clock_clicked();
     }
 //keyboard shortcuts
+    if(k_Ctrl&&e->key()==Qt::Key_0)//MAReset
+        m_glWidget->resetMatrixArtefact();
     if(k_Ctrl&&e->key()==Qt::Key_F)//fullscreen
         on_actionFullscreen_triggered();
+    if(k_Ctrl&&e->key()==Qt::Key_R)//resetProjection
+        m_glWidget->resetVMatrix();
     if(k_Ctrl&&e->key()==Qt::Key_O)//open
         on_actionOpen_triggered();
     if(k_Ctrl&&e->key()==Qt::Key_L)//lights
