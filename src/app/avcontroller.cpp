@@ -49,14 +49,6 @@ AVController::AVController()
 
     qRegisterMetaType<AVHand>("AVHand");
 
-//    m_Kinector= AVKinector::instance();
-
-
-//    WorkerThread *workerThread = new WorkerThread(this);
-//        connect(workerThread, SIGNAL(resultReady(QString)), this, SLOT(handleResults(QString)));
-//        connect(workerThread, SIGNAL(finished()), workerThread, SLOT(deleteLater()));
-//        workerThread->start();
-
     AVKinector *m_Kinector = new AVKinector(m_glWidget);
     int kinerror=m_Kinector->Init();
     std::cout<<"We started the Kinector, the initialization code is "<<kinerror<<std::endl;
@@ -194,6 +186,7 @@ int AVController::readFile(QString filename)
         QMatrix4x4 modelMatrix = m_glWidget->getMatrixArtefact();
         modelMatrix.setToIdentity();
         modelMatrix.translate(-m_model->m_centerPoint);
+        modelMatrix.translate(-m_glWidget->getCamOrigin());
         m_glWidget->setMatrixArtefact(modelMatrix);
     }
 

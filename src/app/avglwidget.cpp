@@ -105,6 +105,7 @@ void AVGLWidget::initialize()
     m_leftVMatrix.setToIdentity();
     m_rightVMatrix.setToIdentity();
     m_camRotateMatrix.setToIdentity();
+    m_MatrixArtefact.setToIdentity();
     m_lighting = true;
     m_lightsAreVisible = true;
     m_vertexColors = false;
@@ -167,6 +168,7 @@ void AVGLWidget::setpMatrix(const QMatrix4x4 &pMatrix)
 void AVGLWidget::resetVMatrix()
 {
     m_camRotateMatrix.setToIdentity();
+    m_camDistanceToOrigin = 150.0;
     updateGL();
 }
 
@@ -174,6 +176,7 @@ void AVGLWidget::resetMatrixArtefact()
 {
     m_MatrixArtefact.setToIdentity();
     m_MatrixArtefact.translate(-m_model->m_centerPoint);
+    m_MatrixArtefact.translate(-m_camOrigin);
     updateGL();
 }
 
@@ -1252,13 +1255,7 @@ void AVGLWidget::catchKP(AVHand mano)
         //calculate axis and angle
         m_kRotAngle=acos(QVector3D::dotProduct(m_kOldRotVec.normalized(),m_kNewRotVec.normalized()))* 180.0 / PI;
         m_axis = QVector3D::crossProduct(m_kOldRotVec.normalized(),m_kNewRotVec.normalized());
-        m_axis = m_MatrixArtefact.inverted().mapVector(m_axis);
-        //Scale by axis and angle
-        //            m_MatrixArtefact.translate(m_model->m_centerPoint);
-        //            m_MatrixArtefact.translate(m_camOrigin);
-        //            m_MatrixArtefact.scale(m_kNewScaleDist/m_kOldScaleDist);
-        //            m_MatrixArtefact.translate(-m_camOrigin);
-        //            m_MatrixArtefact.translate(-m_model->m_centerPoint);
+        m_axis = m_camRotateMatrix.inverted().mapVector(m_axis);
         m_camDistanceToOrigin*=m_kOldScaleDist/m_kNewScaleDist;
         if(m_kRotAngle<30||m_kRotAngle>330)
             m_camRotateMatrix.rotate(-m_kRotAngle,m_axis.normalized());
@@ -1414,7 +1411,7 @@ void AVGLWidget::catchPF(AVPointFrame pFrame)
             {
                 m_iFP.setX((int)pFrame.pf_moving_point_array[0].x);
                 m_iFP.setY((int)pFrame.pf_moving_point_array[0].y);
-                m_modelSize=m_model->getArtefactDepth(m_MatrixArtefact)*m_camDistanceToOrigin/10000;
+                m_modelSize=m_camDistanceToOrigin/100;
             }
             else
             {
@@ -1447,6 +1444,7 @@ void AVGLWidget::catchPF(AVPointFrame pFrame)
                 {
                     RotScaling=false;
                     zooming=false;
+                    rotating=false;
                     m_trackball->release(pixelPosToViewPos(localPosCam), m_MatrixArtefact);
                 }
             }
@@ -1460,8 +1458,9 @@ void AVGLWidget::catchPF(AVPointFrame pFrame)
         if(pFrame.pf_moving_point_count==2)
         {
             //!Scaling and rotation start if the second finger starts to touch
-            if(pFrame.pf_moving_point_array[0].point_event==TP_DOWN||
-                    pFrame.pf_moving_point_array[1].point_event==TP_DOWN)
+            if(!RotScaling&&
+                   (pFrame.pf_moving_point_array[0].point_event==TP_DOWN||
+                    pFrame.pf_moving_point_array[1].point_event==TP_DOWN))
             {
                 RotScaling=true;
                 //get the initial scaling separation
@@ -1488,7 +1487,8 @@ void AVGLWidget::catchPF(AVPointFrame pFrame)
                 m_nZS=QPointF((qreal)(pFrame.pf_moving_point_array[0].x-pFrame.pf_moving_point_array[1].x),
                               (qreal)(pFrame.pf_moving_point_array[0].y-pFrame.pf_moving_point_array[1].y));
                 //!scaling and rotation take place if one of the fingers is moving and RotScaling is on:
-                if(RotScaling&&pFrame.pf_moving_point_array[0].point_event==TP_MOVE&&
+                if(RotScaling&&
+                            pFrame.pf_moving_point_array[0].point_event==TP_MOVE&&
                             pFrame.pf_moving_point_array[1].point_event==TP_MOVE)
                 {
                     //!on pinch zoom out, on split zoom in
@@ -1497,7 +1497,12 @@ void AVGLWidget::catchPF(AVPointFrame pFrame)
                             &&m_nZS.manhattanLength()/m_iZS.manhattanLength()<1.5f
                             &&m_nZS.manhattanLength()/m_iZS.manhattanLength()>0.75f)
                     {
+                        m_MatrixArtefact.translate(m_model->m_centerPoint);
+                        m_MatrixArtefact.translate(m_camOrigin);
                         m_MatrixArtefact.scale(m_nZS.manhattanLength()/m_iZS.manhattanLength());
+                        m_MatrixArtefact.translate(-m_camOrigin);
+                        m_MatrixArtefact.translate(-m_model->m_centerPoint);
+
                     }
                     m_iZS=m_nZS;
 
@@ -1532,10 +1537,13 @@ void AVGLWidget::catchPF(AVPointFrame pFrame)
                 }
 
                 //!scaling ends if one of both fingers go up
-                if(RotScaling&&pFrame.pf_moving_point_array[0].point_event==TP_UP
-                        ||pFrame.pf_moving_point_array[1].point_event==TP_UP)
+                if(RotScaling&&
+                        (pFrame.pf_moving_point_array[0].point_event==TP_UP
+                        ||pFrame.pf_moving_point_array[1].point_event==TP_UP))
                 {
                     RotScaling=false;
+                    zooming=false;
+                    rotating=false;
                     m_trackball->release(pixelPosToViewPos(localPosCam), m_MatrixArtefact);
                 }
                 updateGL();
@@ -1547,10 +1555,14 @@ void AVGLWidget::catchPF(AVPointFrame pFrame)
             if(pFrame.pf_moving_point_count==3){
                 //!on third finger down, initialize trackball movement in middle point of all fingers and stop scaling
                 //!the movement slows down when more fingers are on the screen.
-                if(pFrame.pf_moving_point_array[0].point_event==TP_DOWN||
+                if(!rotating&&
+                       (pFrame.pf_moving_point_array[0].point_event==TP_DOWN||
                         pFrame.pf_moving_point_array[1].point_event==TP_DOWN||
-                        pFrame.pf_moving_point_array[2].point_event==TP_DOWN){
+                        pFrame.pf_moving_point_array[2].point_event==TP_DOWN) )
+                {
                     RotScaling=false;
+                    zooming=false;
+                    rotating=true;
                     AVTouchPoint e;
                     e.point_event=TP_DOWN;e.x=0;e.y=0;e.dx=0;e.dy=0;
                     for(int i = 0; i < pFrame.pf_moving_point_count; ++ i)
@@ -1566,7 +1578,11 @@ void AVGLWidget::catchPF(AVPointFrame pFrame)
                 }
                 else
                 {
-                    if(pFrame.pf_moving_point_array[1].point_event==TP_MOVE){
+                    if((rotating&&
+                            pFrame.pf_moving_point_array[0].point_event==TP_MOVE||
+                            pFrame.pf_moving_point_array[1].point_event==TP_MOVE||
+                            pFrame.pf_moving_point_array[2].point_event==TP_MOVE))
+                    {
                         AVTouchPoint e;
                         e.point_event=TP_MOVE;e.x=0;e.y=0;e.dx=0;e.dy=0;
                         m_slowDownTrackball++;
@@ -1582,10 +1598,14 @@ void AVGLWidget::catchPF(AVPointFrame pFrame)
                             catchEvent(e);//call event switch case calls move trackball
                     }
                     else{
-                        if(pFrame.pf_moving_point_array[0].point_event==TP_UP||
+                        if(rotating&&(
+                                pFrame.pf_moving_point_array[0].point_event==TP_UP||
                                 pFrame.pf_moving_point_array[1].point_event==TP_UP||
-                                pFrame.pf_moving_point_array[2].point_event==TP_UP)
+                                pFrame.pf_moving_point_array[2].point_event==TP_UP))
                         {
+                            rotating=false;
+                            RotScaling=false;
+                            zooming=false;
                             AVTouchPoint e;
                             e.point_event=TP_UP;e.x=0;e.y=0;e.dx=0;e.dy=0;
                             for(int i = 0; i < pFrame.pf_moving_point_count; ++ i){
@@ -1599,7 +1619,6 @@ void AVGLWidget::catchPF(AVPointFrame pFrame)
                             e.dx=(unsigned short)e.dx/pFrame.pf_moving_point_count;
                             e.dy=(unsigned short)e.dy/pFrame.pf_moving_point_count;
                             catchEvent(e);//call event switch case calls release trackball
-
                         }
                     }
                 }
@@ -1609,10 +1628,11 @@ void AVGLWidget::catchPF(AVPointFrame pFrame)
                 if(pFrame.pf_moving_point_count==4)
                 {
                     //!Zooming starts if the second finger starts to touch
-                    if(pFrame.pf_moving_point_array[0].point_event==TP_DOWN||
+                    if(!zooming&&(
+                            pFrame.pf_moving_point_array[0].point_event==TP_DOWN||
                             pFrame.pf_moving_point_array[1].point_event==TP_DOWN||
                             pFrame.pf_moving_point_array[2].point_event==TP_DOWN||
-                            pFrame.pf_moving_point_array[3].point_event==TP_DOWN)
+                            pFrame.pf_moving_point_array[3].point_event==TP_DOWN))
                     {
                         zooming=true;
                         //get the initial zooming lines
@@ -1655,6 +1675,8 @@ void AVGLWidget::catchPF(AVPointFrame pFrame)
                                 ||pFrame.pf_moving_point_array[3].point_event==TP_UP)
                         {
                             zooming=false;
+                            RotScaling=false;
+                            rotating=false;
                             m_trackball->release(pixelPosToViewPos(localPosCam), m_MatrixArtefact);
                         }
                         updateGL();
@@ -1713,6 +1735,7 @@ void AVGLWidget::catchPF(AVPointFrame pFrame)
                                 {
                                     zooming=false;
                                     RotScaling=false;
+                                    rotating=false;
                                     AVTouchPoint e;
                                     e.point_event=TP_UP;
                                     e.x=0;
