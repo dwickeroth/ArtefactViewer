@@ -186,6 +186,11 @@ private:
     bool        m_kLTr; //!Kinect right Traslation on
     bool        m_kRot; //! Kinect Rotation on
     bool        m_kScale; //! Kinect lasso Scaling on
+    bool        lRotInit;
+    bool        rRotInit;
+    bool        lScaleInit;
+    bool        rScaleInit;
+    bool        tIdle;
 
 
     double      m_camDistanceToOrigin;
@@ -203,6 +208,8 @@ private:
     QVector3D   m_LeftCamPosition;
     QVector3D   m_RightCamPosition;
     QVector3D   m_camUpDirection;
+    QVector3D   m_camRightDirection;
+    QVector3D   m_camFrontDirection;
     QVector3D   m_backgroundColor1;
     QVector3D   m_backgroundColor2;
     QVector3D   m_axis;
@@ -232,14 +239,14 @@ private:
     double      newAngleSign;
     double      newAngleCR;
     double      resultingAngle;
-    bool        zooming;
+    double      m_tRotAngle;
+
     bool        RotScaling;
     bool        rotating;
+    bool        zooming;
+    bool        moving;
     bool        spinning;
-    bool        lRotInit;
-    bool        rRotInit;
-    bool        lScaleInit;
-    bool        rScaleInit;
+
 
     unsigned int         m_kLUC; //! kinect unknown count
     unsigned int         m_kLNTC; //! kinect not tracked count
@@ -282,9 +289,6 @@ private:
     static const
     int         m_jumpSize=40;
     static const
-    int         m_zoomTolerance=1;
-    static const
-    int         m_speeder=10;
     int         switcher;
     QMatrix4x4  m_pMatrix;
     QMatrix4x4  m_vMatrix;
