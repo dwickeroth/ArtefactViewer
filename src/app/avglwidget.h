@@ -62,8 +62,12 @@ public:
     void fillBuffers();
 
     QMatrix4x4 getMvpMatrix();
-    QMatrix4x4 getLeftMvpMatrix();
-    QMatrix4x4 getRightMvpMatrix();
+    QMatrix4x4 getCurrentMvMatrix();
+
+    QQuaternion QuaternionFromMatrix(QMatrix4x4 m);
+    double  evaluateMVAngle(QQuaternion ideal);
+    double  evaluateMVDistance(QVector4D ideal);
+
 
     int getSelectedPoint() const;
     void setSelectedPoint(int selectedPoint);
@@ -82,6 +86,8 @@ public:
 
     bool isShiftDown() const;
     void setShiftDown(bool shiftDown);
+
+
 
     bool getLightsAreVisible() const;
     void setLightsAreVisible(bool lightsAreVisible);
@@ -113,8 +119,10 @@ public:
     QMatrix4x4 getMatrixArtefact() const;
     void setMatrixArtefact(const QMatrix4x4 &matrixArtefact);
 
-    QMatrix4x4 getpMatrix() const;
-    void setpMatrix(const QMatrix4x4 &pmatrix);
+    QMatrix4x4 getLeftVMatrix() const;
+    QMatrix4x4 getRightVMatrix() const;
+    QMatrix4x4 getViewMatrix() const;
+    void setVMatrix(const QMatrix4x4 &pmatrix);
 
     void resetVMatrix();
     void resetMatrixArtefact();
@@ -194,7 +202,6 @@ private:
 
 
     double      m_camDistanceToOrigin;
-    double      m_modelSize;
     double      m_kRotAngle;
     double      m_zoomFactor;
 
@@ -209,7 +216,7 @@ private:
     QVector3D   m_RightCamPosition;
     QVector3D   m_camUpDirection;
     QVector3D   m_camRightDirection;
-    QVector3D   m_camFrontDirection;
+    QVector3D   m_modelGap;
     QVector3D   m_backgroundColor1;
     QVector3D   m_backgroundColor2;
     QVector3D   m_axis;

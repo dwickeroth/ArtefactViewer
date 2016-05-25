@@ -20,7 +20,6 @@
 
 #include <iostream>
 //TODO P: change this declaration to .h file
-bool k_Ctrl=false;
 AVMainWindow* AVMainWindow::m_instance = 0;
 
 AVMainWindow::AVMainWindow(QWidget *parent) :
@@ -34,11 +33,6 @@ AVMainWindow::AVMainWindow(QWidget *parent) :
     readPlyFile("../mesh/input_klein.ply");
     currentlyOpenFile = "input_klein";
      */
-
-    //    AVStatus=AVMainWindow::instance()->statusBar();
-    //    AVMainWindow::ui->toolBar->addWidget(AVStatus);
-    //    AVMainWindow::ui->toolBar->setGeometry(0,30,this->width(),30);
-    //    AVStatus->showMessage(m_status,0);
 }
 
 AVMainWindow::~AVMainWindow()
@@ -64,9 +58,7 @@ void AVMainWindow::setGLWidget(AVGLWidget *glWidget)
 
     initialize();
     m_glWidget->initialize();
-//    ui->toolBar->addWidget(AVMainWindow::instance()->statusBar());
     ui->toolBar->addWidget(m_glWidget->AVStatus);
-
 }
 
 
@@ -74,7 +66,7 @@ void AVMainWindow::setGLWidget(AVGLWidget *glWidget)
 void AVMainWindow::initialize()
 {
     m_model = AVModel::instance();
-
+    k_Ctrl=false;
     m_model->m_listOfPointClouds.clear();
     m_model->m_listOfPointClouds.append(pointCloud());
     m_model->m_listOfPointClouds.last().color = QColor(Qt::blue);
@@ -155,6 +147,17 @@ void AVMainWindow::keyPressEvent(QKeyEvent *e)
         on_checkBox_vertexColors_toggled(true);
     if(k_Ctrl&&e->key()==Qt::Key_H)//hideCursor
         m_glWidget->setCursor(Qt::BlankCursor);
+    if(k_Ctrl&&e->key()==Qt::Key_E)//printMVMatrix
+    {
+        //TODO:write to file
+        qDebug()<<"M "<<m_glWidget->getMatrixArtefact();
+        qDebug()<<"V "<<m_glWidget->getViewMatrix();
+        qDebug()<<"MV "<<m_glWidget->getCurrentMvMatrix();
+        qDebug()<<"MVQ "<<m_glWidget->QuaternionFromMatrix(m_glWidget->getCurrentMvMatrix());
+//        qDebug()<<"Angle Evaluation "<<m_glWidget->evaluateMVAngle(QQuaternion(1,0,0,0));
+//        qDebug()<<"Distance Evaluation "<<m_glWidget->evaluateMVDistance(QVector3D(0,0,0))
+
+    }
 }
 
 
@@ -1038,18 +1041,12 @@ float AVMainWindow::getRotationAngleFromUI()
 void AVMainWindow::sortPointClouds()
 {
     QMatrix4x4 mvpMatrix = m_glWidget->getMvpMatrix();
-//    QMatrix4x4 LeftMvpMatrix = m_glWidget->getMvpMatrix();
-//    QMatrix4x4 RightvpMatrix = m_glWidget->getMvpMatrix();
     for (int i=0; i < m_model->m_listOfPointClouds.size()-1; i++)
     {
         for (int j=i+1; j < m_model->m_listOfPointClouds.size()-1; j++)
         {
             if ((mvpMatrix * m_model->m_listOfPointClouds[i].points.first()).y() < (mvpMatrix * m_model->m_listOfPointClouds[j].points.first()).y())
                 m_model->m_listOfPointClouds.swap(i,j);
-//            if ((LeftMvpMatrix * m_model->m_listOfPointClouds[i].points.first()).y() < (LeftMvpMatrix * m_model->m_listOfPointClouds[j].points.first()).y())
-//                m_model->m_listOfPointClouds.swap(i,j);
-//            if ((RightMvpMatrix * m_model->m_listOfPointClouds[i].points.first()).y() < (RightMvpMatrix * m_model->m_listOfPointClouds[j].points.first()).y())
-//                m_model->m_listOfPointClouds.swap(i,j);
         }
     }
 }

@@ -134,7 +134,7 @@ private:
     Ui::AVMainWindow*   ui;
 
     int m_currentLightIndex;
-
+    bool k_Ctrl;
     float getRotationAngleFromUI();
     void sortPointClouds();
     void sortVectorAngleList(QList<vectorAngle> &v);
