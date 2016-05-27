@@ -16,7 +16,8 @@ AVKinector::AVKinector(QObject *parent)
 //    cout<<"AVKinector on, setting priority to lowest"<<endl;
 //    QThread::currentThread()->setPriority(QThread::LowestPriority);
 //    run();
-//    cout<<"requested first run from initialization"<<endl;
+    cout<<"requested first run from initialization"<<endl;
+    BodyIndex=12;
 }
 AVKinector::~AVKinector()
 {
@@ -151,7 +152,7 @@ void AVKinector::ProcessBody(INT64 nTime, int nBodyCount, IBody** ppBodies)
                 IBody* pBody = ppBodies[i];
                 if (pBody)
                 {
-//                        cout<<"we have a body"<<endl;
+//                        cout<<"we have a body number "<<i<<endl;
 
                     BOOLEAN bTracked = false;
                     hr = pBody->get_IsTracked(&bTracked);
@@ -164,7 +165,6 @@ void AVKinector::ProcessBody(INT64 nTime, int nBodyCount, IBody** ppBodies)
 //                        D2D1_POINT_2F jointPoints[JointType_Count];
                         HandState leftHandState = HandState_Unknown;
                         HandState rightHandState = HandState_Unknown;
-
                         pBody->get_HandLeftState(&leftHandState);
 //                        cout<<leftHandState<<endl;
                         pBody->get_HandRightState(&rightHandState);
@@ -172,12 +172,14 @@ void AVKinector::ProcessBody(INT64 nTime, int nBodyCount, IBody** ppBodies)
                         hr = pBody->GetJoints(_countof(joints), joints);
                         if(SUCCEEDED(hr)){
                             counters++;
+//                            cout<<"we have a body number "<<i<<" count "<<nBodyCount<<endl;
                             AVHand izq;
                             izq.isLeft=true;
                             izq.hState=leftHandState;
                             izq.x=joints[JointType_HandLeft].Position.X;
                             izq.y=joints[JointType_HandLeft].Position.Y;
                             izq.z=joints[JointType_HandLeft].Position.Z;
+                            izq.index=i;
                             if(counters%3==0)
                             emit throwKP(izq);
 
@@ -187,6 +189,7 @@ void AVKinector::ProcessBody(INT64 nTime, int nBodyCount, IBody** ppBodies)
                             der.x=joints[JointType_HandRight].Position.X;
                             der.y=joints[JointType_HandRight].Position.Y;
                             der.z=joints[JointType_HandRight].Position.Z;
+                            der.index=i;
                             if(counters%3==0)
                             emit throwKP(der);
 

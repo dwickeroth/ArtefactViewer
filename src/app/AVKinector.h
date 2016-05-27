@@ -69,6 +69,7 @@ public:
     INT64                   m_nNextStatusTime;
     DWORD                   m_nFramesSinceUpdate;
     HRESULT                 hr;
+    int                     BodyIndex;
 
     // Current Kinect
     IKinectSensor*          m_pKinectSensor;

@@ -182,6 +182,7 @@ private:
     int         m_currentAnnotation;
     int         m_enhancement;
     int         m_enhance_param[4][3];
+    int         m_kIndex;
 
     bool        m_shiftDown;
     bool        m_lightsAreVisible;
