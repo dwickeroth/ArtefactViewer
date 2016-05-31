@@ -174,6 +174,7 @@ QMatrix4x4 AVGLWidget::getVRMatrix() const
 
 void AVGLWidget::setVRMatrix(const QMatrix4x4 &vMatrix)
 {
+    m_camRotateMatrix = QMatrix4x4(vMatrix.normalMatrix()).inverted();
 }
 
 void AVGLWidget::resetVMatrix()
