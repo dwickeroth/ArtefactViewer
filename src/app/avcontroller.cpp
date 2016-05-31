@@ -139,7 +139,8 @@ int AVController::readFile(QString filename)
 
         QDomElement view = root.elementsByTagName("view").at(0).toElement();
         m_glWidget->setCamDistanceToOrigin(view.attribute("camDistanceToOrigin").toFloat());
-        m_glWidget->setMatrixArtefact(QStringToQMatrix4x4(view.attribute("mMatrixArtefact")));        
+        m_glWidget->setMatrixArtefact(QStringToQMatrix4x4(view.attribute("mMatrixArtefact")));
+        m_glWidget->setVRMatrix(QStringToQMatrix4x4(view.attribute("mCamRotateMatrix")));
         m_glWidget->setCamOrigin(QVector3D(QStringToQVector4D(view.attribute("camOrigin"))));
 
         for (int i=0; i < 4; i++)
@@ -241,6 +242,7 @@ void AVController::saveXmlFile()
 
         view.setAttribute("camDistanceToOrigin", m_glWidget->getCamDistanceToOrigin());
         view.setAttribute("mMatrixArtefact", QMatrix4x4ToQString(m_glWidget->getMatrixArtefact()));
+        view.setAttribute("mCamRotateMatrix", QMatrix4x4ToQString(m_glWidget->getVRMatrix()));
         view.setAttribute("camOrigin", QVector4DToQString(m_glWidget->getCamOrigin()));
         settings.appendChild(view);
 

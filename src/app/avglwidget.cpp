@@ -167,10 +167,13 @@ QMatrix4x4 AVGLWidget::getViewMatrix() const
 {
     return m_vMatrix;
 }
-
-void AVGLWidget::setVMatrix(const QMatrix4x4 &vMatrix)
+QMatrix4x4 AVGLWidget::getVRMatrix() const
 {
-    m_vMatrixCurrent = vMatrix;
+    return m_vMatrix;
+}
+
+void AVGLWidget::setVRMatrix(const QMatrix4x4 &vMatrix)
+{
 }
 
 void AVGLWidget::resetVMatrix()
@@ -1115,8 +1118,9 @@ void AVGLWidget::catchKP(AVHand mano)
         //! uncomment this for use with vertical screen
         //m_kNewTrPos= QVector4D((qreal)-mano.x,(qreal)mano.y,(qreal)mano.z, 1);
         m_kResTr=m_camDistanceToOrigin/5*(m_kInitialTrPos-m_kNewTrPos);
-        m_axis = m_camRotateMatrix.mapVector(
-                    m_MatrixArtefact.inverted().mapVector(m_kResTr.toVector3D()) );
+        m_axis = m_MatrixArtefact.inverted().mapVector(
+                    m_camRotateMatrix.mapVector(
+                    m_kResTr.toVector3D()) );
         m_status+=" Object translation is active";
 
 
@@ -1183,8 +1187,9 @@ void AVGLWidget::catchKP(AVHand mano)
         //calculate axis and angle
         m_kRotAngle=acos(QVector3D::dotProduct(m_kOldRotVec.normalized(),m_kNewRotVec.normalized()))* 180.0 / PI;
         m_axis = QVector3D::crossProduct(m_kOldRotVec.normalized(),m_kNewRotVec.normalized());
-        m_axis = m_camRotateMatrix.mapVector(
-                    m_MatrixArtefact.inverted().mapVector(m_axis) );
+        m_axis = m_MatrixArtefact.inverted().mapVector(
+                    m_camRotateMatrix.mapVector(
+                        m_axis) );
         //rotate by axis and angle
         if(m_kRotAngle<30||m_kRotAngle>330)
         {
@@ -1536,7 +1541,7 @@ void AVGLWidget::catchPF(AVPointFrame pFrame)
                         newAngleSign=-(newAngleCR-180)/abs(newAngleCR-180);
                         m_tRotAngle=(-abs(newAngleCR-180)+180)*newAngleSign;
                         //rotate
-                        if(abs(m_tRotAngle)<30)
+                        if(abs(m_tRotAngle)<10)
                         {
                             m_MatrixArtefact.translate(m_model->m_centerPoint);
                             //                        m_MatrixArtefact.translate(m_camOrigin);
@@ -1596,15 +1601,16 @@ void AVGLWidget::catchPF(AVPointFrame pFrame)
                             m_nFP.setY((qreal)pFrame.pf_moving_point_array[0].y);
                             QLineF delta(pixelPosToViewPos(m_iFP),pixelPosToViewPos(m_nFP));
                             m_axis = QVector3D(delta.dy(), delta.dx(), 0.0f).normalized();
-                            m_axis = m_MatrixArtefact.inverted().mapVector(m_axis);
+                            m_axis = m_MatrixArtefact.inverted().mapVector(
+                                        m_camRotateMatrix.mapVector(
+                                            m_axis));
                             m_axis.normalize();
                             m_tRotAngle=-180 / PI * delta.length();
                             m_MatrixArtefact.translate(m_model->m_centerPoint);
 //                        m_MatrixArtefact.translate(m_camOrigin);
                             if(abs(m_tRotAngle)<10)
-                                m_MatrixArtefact.rotate(-180 / PI * delta.length(),
-                                                        m_camRotateMatrix.mapVector(m_axis.normalized()));
-                            cout<<"angle is"<<-180 / PI * delta.length()<<endl;
+                                m_MatrixArtefact.rotate(-180 / PI * delta.length(),m_axis);
+//                            cout<<"angle is"<<-180 / PI * delta.length()<<endl;
 //                        m_MatrixArtefact.translate(-m_camOrigin);
                             m_MatrixArtefact.translate(-m_model->m_centerPoint);
                             m_iFP=m_nFP;
@@ -1633,7 +1639,11 @@ void AVGLWidget::catchPF(AVPointFrame pFrame)
                                     pFrame.pf_moving_point_array[0].point_event==TP_DOWN||
                                     pFrame.pf_moving_point_array[1].point_event==TP_DOWN||
                                     pFrame.pf_moving_point_array[2].point_event==TP_DOWN||
-                                    pFrame.pf_moving_point_array[3].point_event==TP_DOWN))
+                                    pFrame.pf_moving_point_array[3].point_event==TP_DOWN||
+                                    (pFrame.pf_moving_point_array[0].point_event==TP_MOVE&&
+                                     pFrame.pf_moving_point_array[1].point_event==TP_MOVE&&
+                                     pFrame.pf_moving_point_array[2].point_event==TP_MOVE&&
+                                     pFrame.pf_moving_point_array[3].point_event==TP_MOVE)))
                         {
                             zooming=true;
                             RotScaling=false;
@@ -1684,7 +1694,6 @@ void AVGLWidget::catchPF(AVPointFrame pFrame)
                                 zooming=false;
                                 moving=false;
                                 spinning=false;
-                                m_trackball->push(pixelPosToViewPos(localPosCam), QQuaternion() );
                             }
                         }
                     }
@@ -1697,7 +1706,12 @@ void AVGLWidget::catchPF(AVPointFrame pFrame)
                                         pFrame.pf_moving_point_array[1].point_event==TP_DOWN||
                                         pFrame.pf_moving_point_array[2].point_event==TP_DOWN||
                                         pFrame.pf_moving_point_array[3].point_event==TP_DOWN||
-                                        pFrame.pf_moving_point_array[4].point_event==TP_DOWN))
+                                        pFrame.pf_moving_point_array[4].point_event==TP_DOWN||
+                                        (pFrame.pf_moving_point_array[0].point_event==TP_MOVE&&
+                                         pFrame.pf_moving_point_array[1].point_event==TP_MOVE&&
+                                         pFrame.pf_moving_point_array[2].point_event==TP_MOVE&&
+                                         pFrame.pf_moving_point_array[3].point_event==TP_MOVE&&
+                                         pFrame.pf_moving_point_array[4].point_event==TP_MOVE)))
                             {
                                 m_iFP.setX((qreal)-pFrame.pf_moving_point_array[4].x);
                                 m_iFP.setY((qreal)pFrame.pf_moving_point_array[4].y);
@@ -1757,7 +1771,13 @@ void AVGLWidget::catchPF(AVPointFrame pFrame)
                                         pFrame.pf_moving_point_array[2].point_event==TP_DOWN||
                                         pFrame.pf_moving_point_array[3].point_event==TP_DOWN||
                                         pFrame.pf_moving_point_array[4].point_event==TP_DOWN||
-                                        pFrame.pf_moving_point_array[5].point_event==TP_DOWN))
+                                        pFrame.pf_moving_point_array[5].point_event==TP_DOWN||
+                                        (pFrame.pf_moving_point_array[0].point_event==TP_MOVE&&
+                                         pFrame.pf_moving_point_array[1].point_event==TP_MOVE&&
+                                         pFrame.pf_moving_point_array[2].point_event==TP_MOVE&&
+                                         pFrame.pf_moving_point_array[3].point_event==TP_MOVE&&
+                                         pFrame.pf_moving_point_array[4].point_event==TP_MOVE&&
+                                         pFrame.pf_moving_point_array[5].point_event==TP_MOVE)))
                             {
                                 spinning=true;
                                 RotScaling=false;

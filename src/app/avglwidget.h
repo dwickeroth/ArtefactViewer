@@ -122,7 +122,8 @@ public:
     QMatrix4x4 getLeftVMatrix() const;
     QMatrix4x4 getRightVMatrix() const;
     QMatrix4x4 getViewMatrix() const;
-    void setVMatrix(const QMatrix4x4 &pmatrix);
+    QMatrix4x4 getVRMatrix() const;
+    void setVRMatrix(const QMatrix4x4 &pmatrix);
 
     void resetVMatrix();
     void resetMatrixArtefact();
