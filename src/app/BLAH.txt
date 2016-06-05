@@ -1,0 +1,31 @@
+            //zooming test
+            //    zooming approach 2
+            //    if(zooming&&pFrame.pf_moving_point_array[0].point_event==TP_MOVE||zooming&&pFrame.pf_moving_point_array[1].point_event==TP_MOVE)
+            //    {
+            //    m_nZS.setX(((int)(pFrame.pf_moving_point_array[0].x-pFrame.pf_moving_point_array[1].x)));
+            //    m_nZS.setY(((int)(pFrame.pf_moving_point_array[0].y-pFrame.pf_moving_point_array[1].y)));
+            //    if(m_nZS.x()/m_iZS.x()>0)setZoomLevel(m_nZS.x()/m_iZS.x(),true);
+            //    if(m_nZS.x()/m_iZS.x()>1)std::cout<<"zoom out"<<m_nZS.x()/m_iZS.x()<<std::endl;
+            //    if(m_nZS.x()/m_iZS.x()>1)std::cout<<"NO ZOOM"<<std::endl;
+            //    if(m_nZS.x()/m_iZS.x()<1)std::cout<<"zoom in"<<m_nZS.x()/m_iZS.x()<<std::endl;
+            //    }
+
+            //    zooming approach 1
+            //    if(zooming&&m_iZS.x()<(qreal)(pFrame.pf_moving_point_array[0].x-pFrame.pf_moving_point_array[1].x-100)||
+            //            (zooming&&m_iZS.y()<(qreal)(pFrame.pf_moving_point_array[0].y-pFrame.pf_moving_point_array[1].y-100)))
+            //    {
+            //        setZoomLevel(1.000001, true);
+            //        m_iZS.setX((qreal)(pFrame.pf_moving_point_array[0].x-pFrame.pf_moving_point_array[1].x));
+            //        m_iZS.setY((qreal)(pFrame.pf_moving_point_array[0].y-pFrame.pf_moving_point_array[1].y));
+            //        std::cout<<"we are rezooming because difx="<<m_iZS.x()<<std::endl;
+            //    }
+            //    if(zooming&&m_iZS.x()>(qreal)(pFrame.pf_moving_point_array[0].x-pFrame.pf_moving_point_array[1].x)||
+            //            (zooming&&m_iZS.y()>(qreal)(pFrame.pf_moving_point_array[0].y-pFrame.pf_moving_point_array[1].y)))
+            //    {
+            //        setZoomLevel(0.909090909, true);
+            //        m_iZS.setX((qreal)(pFrame.pf_moving_point_array[0].x-pFrame.pf_moving_point_array[1].x));
+            //        m_iZS.setY((qreal)(pFrame.pf_moving_point_array[0].y-pFrame.pf_moving_point_array[1].y));
+            //        std::cout<<"we are unzooming"<<std::endl;
+            //    }
+
+            //    zooming starts if a second finger or two fingers come down

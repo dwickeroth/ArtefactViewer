@@ -26,7 +26,10 @@ SOURCES +=\
     avmain.cpp \
     avtrackball.cpp \
     avoffscreendialog.cpp \
-    avlight.cpp
+    avlight.cpp \
+    AVKinector.cpp \
+    AVPQReader.cpp \
+    avmainwindow.cpp
 
 HEADERS  += avmainwindow.h \
     avcontroller.h \
@@ -37,7 +40,16 @@ HEADERS  += avmainwindow.h \
     avplugininterfaces.h \
     avtrackball.h \
     avoffscreendialog.h \
-    avlight.h
+    avlight.h \
+    PQMTClient.h \
+    avpointframe.h \
+    Kinect.h \
+    AVKinector.h \
+    AVPQReader.h \
+    AVTouchPoint.h \
+    BodyBasics.h \
+    stdafx.h \
+    avhand.h
 
 FORMS    += avmainwindow.ui \
     about.ui \
@@ -56,3 +68,16 @@ first.depends = $(first) copymanual
 export(first.depends)
 export(copymanual.commands)
 QMAKE_EXTRA_TARGETS += first copymanual
+
+win32: LIBS += -L$$PWD/../lib/x64/ -lPQMTClient
+
+INCLUDEPATH += $$PWD/../include
+DEPENDPATH += $$PWD/../include
+
+OTHER_FILES += \
+    BLAH.txt
+
+unix|win32: LIBS += -L$$PWD/../../Kinect/Lib/x64/ -lKinect20
+
+INCLUDEPATH += $$PWD/../../Kinect/Lib/x64
+DEPENDPATH += $$PWD/../../Kinect/Lib/x64

@@ -1,0 +1,28 @@
+TODOs and notes:
+
+
+TODO:
+create a status field: "x many fingers on the screen", "finger at: x,y", "Hand at x,y,z", "kinect on"... IN THE WIDGET 
+Give feedback: Hello, I am Avy, please touch the screen to start. Click on this field to access the documentation... etc)
+Create buttons for reset, lights on/off, 
+
+Kinect:
+both hands open for 5 seconds activate kinect interaction
++-if kinect interaction is on:
+-one hand up and open, the other one "under the object" closed for 3 seconds activates traslation, whereas the closed hand becomes the mover and the other one the "signal" (move remains on as long as that hand remains open, or until the other hand opens for 3 seconds).
+Both hands "under the object" open for 5 seconds and then closed for 3 seconds activate Rotate-Scale-Translate until one or both hands stay open for 3 seconds
+Both hands closed for 5 seconds and RST off deactivates kinect
+
+Note:(unknown and lasso states just report coordinates)
+
+FOR NOW CHECK:
+Program zoom in, zoom out and rotate (most likely: change to matrix)
+Try sending TouchGestures?
+
+CHECKED:
+
+change struct contents and send position by signal
+send the vector of point frames in the calling function of "on touch point" (on point frame)
+
+
+

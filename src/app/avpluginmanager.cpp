@@ -2,6 +2,7 @@
 #include "avmainwindow.h"
 #include "avplugininterfaces.h"
 #include "avcontroller.h"
+#include "avpqreader.h"
 
 #include <iostream>
 
@@ -44,12 +45,20 @@ void AVPluginManager::loadPlugins()
 {
     foreach(QString fileName, m_pluginsDir.entryList(QDir::Files))
     {
-        std::cout << "checking file: " << fileName.toStdString().c_str() << std::endl;
+     //if clauses to shorten standard output
+        if(fileName.toStdString()=="readStld.dll")
+            std::cout << "checking file: " << fileName.toStdString().c_str() << std::endl;
+        if(fileName.toStdString()=="readPlyd.dll")
+            std::cout << "checking file: " << fileName.toStdString().c_str() << std::endl;
 
         QPluginLoader loader(m_pluginsDir.absoluteFilePath(fileName));
         QObject *plugin = loader.instance();
         if(!plugin)
         {
+          //if clauses to shorten standard output
+            if(fileName.toStdString()=="readStld.dll")
+            std::cout << "not a plugin: " << fileName.toStdString().c_str() << std::endl;
+            if(fileName.toStdString()=="readPlyd.dll")
             std::cout << "not a plugin: " << fileName.toStdString().c_str() << std::endl;
             continue;
         }
@@ -75,5 +84,6 @@ void AVPluginManager::loadPlugins()
             }
         }
     }
+
 }
 

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1496</width>
-    <height>1002</height>
+    <width>1580</width>
+    <height>1090</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -25,36 +25,19 @@
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout">
     <item>
-     <layout class="QVBoxLayout" name="verticalLayout_glWidget">
-      <item>
-       <spacer name="horizontalSpacer">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>40</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-     </layout>
+     <layout class="QVBoxLayout" name="verticalLayout_glWidget"/>
     </item>
     <item>
      <widget class="QScrollArea" name="scrollArea">
-      <property name="enabled">
-       <bool>false</bool>
-      </property>
       <property name="minimumSize">
        <size>
-        <width>0</width>
+        <width>231</width>
         <height>0</height>
        </size>
       </property>
       <property name="maximumSize">
        <size>
-        <width>0</width>
+        <width>231</width>
         <height>16777215</height>
        </size>
       </property>
@@ -75,8 +58,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>268</width>
-         <height>952</height>
+         <width>214</width>
+         <height>1019</height>
         </rect>
        </property>
        <property name="maximumSize">
@@ -130,9 +113,38 @@
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_6">
            <item>
+            <widget class="QCheckBox" name="checkBox_lightVisible">
+             <property name="minimumSize">
+              <size>
+               <width>100</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>200</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <pointsize>8</pointsize>
+               <weight>50</weight>
+               <bold>false</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>Lights visible</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
             <widget class="QCheckBox" name="checkBox_vertexColors">
              <property name="enabled">
-              <bool>false</bool>
+              <bool>true</bool>
              </property>
              <property name="maximumSize">
               <size>
@@ -174,35 +186,6 @@
                </property>
                <property name="text">
                 <string>Use Lighting</string>
-               </property>
-               <property name="checked">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QCheckBox" name="checkBox_lightVisible">
-               <property name="minimumSize">
-                <size>
-                 <width>100</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>200</width>
-                 <height>16777215</height>
-                </size>
-               </property>
-               <property name="font">
-                <font>
-                 <pointsize>8</pointsize>
-                 <weight>50</weight>
-                 <bold>false</bold>
-                </font>
-               </property>
-               <property name="text">
-                <string>Lights visible</string>
                </property>
                <property name="checked">
                 <bool>true</bool>
@@ -1780,24 +1763,40 @@
          </spacer>
         </item>
        </layout>
-       <zorder>groupBox_rotation</zorder>
-       <zorder>groupBox_lights</zorder>
-       <zorder>groupBox_lighting</zorder>
-       <zorder>groupBox_enhancements</zorder>
-       <zorder>groupBox_annotations</zorder>
-       <zorder>groupBox_information</zorder>
       </widget>
      </widget>
     </item>
+    <item>
+     <spacer name="horizontalSpacer">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>40</width>
+        <height>20</height>
+       </size>
+      </property>
+     </spacer>
+    </item>
    </layout>
   </widget>
+  <widget class="QToolBar" name="mainToolBar">
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+  </widget>
+  <widget class="QStatusBar" name="statusBar"/>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1496</width>
-     <height>31</height>
+     <width>1580</width>
+     <height>21</height>
     </rect>
    </property>
    <property name="locale">
@@ -1838,28 +1837,6 @@
    <addaction name="menuWerkzeuge"/>
    <addaction name="menuEinstellungen"/>
    <addaction name="menuHelp"/>
-  </widget>
-  <widget class="QStatusBar" name="statusBar">
-   <property name="enabled">
-    <bool>true</bool>
-   </property>
-   <property name="autoFillBackground">
-    <bool>true</bool>
-   </property>
-   <property name="sizeGripEnabled">
-    <bool>false</bool>
-   </property>
-  </widget>
-  <widget class="QToolBar" name="toolBar">
-   <property name="windowTitle">
-    <string>toolBar</string>
-   </property>
-   <attribute name="toolBarArea">
-    <enum>TopToolBarArea</enum>
-   </attribute>
-   <attribute name="toolBarBreak">
-    <bool>false</bool>
-   </attribute>
   </widget>
   <action name="actionOpen">
    <property name="text">

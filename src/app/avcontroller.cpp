@@ -1,14 +1,15 @@
 #include "avcontroller.h"
-
 #include "avglwidget.h"
+#include "AVKinector.h"
 #include "avmainwindow.h"
 #include "avmodel.h"
 #include "avplugininterfaces.h"
 #include "avpluginmanager.h"
-
+#include "avpqreader.h"
 #include <QMessageBox>
 #include <QDomDocument>
 #include <QCoreApplication>
+#include "avpointframe.h"
 
 #include <iostream>
 
@@ -18,6 +19,9 @@ AVController::AVController()
 {
     m_mainWindow = AVMainWindow::instance();
     m_glWidget = new AVGLWidget(m_mainWindow);
+    m_pqReader= AVPQReader::instance();
+    int err_code=m_pqReader->Init();
+    std::cout<<"We started the PQReader, the initialization code is "<<err_code<<std::endl;
     m_glWidget->setFocusPolicy(Qt::StrongFocus);
     m_mainWindow->setGLWidget(m_glWidget);
     m_mainWindow->showMaximized();
@@ -28,27 +32,29 @@ AVController::AVController()
 
     //set plugins dir in plugin manager
     QDir pluginsDir = QCoreApplication::applicationDirPath();
-/*
-    #if defined(Q_OS_WIN)
-        while(pluginsDir.dirName().endsWith("debug", Qt::CaseInsensitive) || pluginsDir.dirName().endsWith("release", Qt::CaseInsensitive))
-            pluginsDir.cdUp();
-    #elif defined(Q_OS_LINUX)
-        while(pluginsDir.dirName().endsWith("debug", Qt::CaseInsensitive) || pluginsDir.dirName().endsWith("release", Qt::CaseInsensitive))
-            pluginsDir.cdUp();
-    #elif defined(Q_OS_MAC)
-        if (pluginsDir.dirName() == "MacOS") {
-            pluginsDir.cdUp();
-            pluginsDir.cdUp();
-            pluginsDir.cdUp();
-        }
-    #endif
-*/
+
+    //TODO: Versioning for mac and linux, insert here
+
     pluginsDir.cd("plugins");
     m_pluginManager->setPluginsDir(pluginsDir.canonicalPath());
     m_pluginManager->loadPlugins();
-
     m_currentlyOpenFile = QString("");
     m_xmlFileAlreadyExists = false;
+//SignalSlotApproach
+    qRegisterMetaType<AVPointFrame>("AVPointFrame");
+    QObject::connect(m_pqReader,SIGNAL(throwPF(AVPointFrame)),
+                     m_glWidget,SLOT(catchPF(AVPointFrame)));
+
+    std::cout<<"connected SigSlot"<<std::endl;
+
+    qRegisterMetaType<AVHand>("AVHand");
+
+    AVKinector *m_Kinector = new AVKinector(m_glWidget);
+    int kinerror=m_Kinector->Init();
+    std::cout<<"We started the Kinector, the initialization code is "<<kinerror<<std::endl;
+    QObject::connect(m_Kinector,SIGNAL(throwKP(AVHand)),
+                     m_glWidget,SLOT(catchKP(AVHand)));
+    m_Kinector->start();
 }
 
 
@@ -57,6 +63,7 @@ AVController::~AVController()
     m_pluginManager->destroy();
     m_model->destroy();
     m_mainWindow->destroy();
+    m_pqReader->destroy();
 }
 
 
@@ -82,7 +89,6 @@ int AVController::readFile(QString filename)
 
     m_mainWindow->initialize();
     m_glWidget->initialize();
-
     QString filePath = fileInfo.path();
     QString fileBaseName = fileInfo.baseName();
     m_currentlyOpenFile = filePath.append("/" +  fileBaseName);
@@ -133,7 +139,8 @@ int AVController::readFile(QString filename)
 
         QDomElement view = root.elementsByTagName("view").at(0).toElement();
         m_glWidget->setCamDistanceToOrigin(view.attribute("camDistanceToOrigin").toFloat());
-        m_glWidget->setMatrixArtefact(QStringToQMatrix4x4(view.attribute("mMatrixArtefact")));        
+        m_glWidget->setMatrixArtefact(QStringToQMatrix4x4(view.attribute("mMatrixArtefact")));
+        m_glWidget->setVRMatrix(QStringToQMatrix4x4(view.attribute("mCamRotateMatrix")));
         m_glWidget->setCamOrigin(QVector3D(QStringToQVector4D(view.attribute("camOrigin"))));
 
         for (int i=0; i < 4; i++)
@@ -180,6 +187,7 @@ int AVController::readFile(QString filename)
         QMatrix4x4 modelMatrix = m_glWidget->getMatrixArtefact();
         modelMatrix.setToIdentity();
         modelMatrix.translate(-m_model->m_centerPoint);
+        modelMatrix.translate(-m_glWidget->getCamOrigin());
         m_glWidget->setMatrixArtefact(modelMatrix);
     }
 
@@ -234,6 +242,7 @@ void AVController::saveXmlFile()
 
         view.setAttribute("camDistanceToOrigin", m_glWidget->getCamDistanceToOrigin());
         view.setAttribute("mMatrixArtefact", QMatrix4x4ToQString(m_glWidget->getMatrixArtefact()));
+        view.setAttribute("mCamRotateMatrix", QMatrix4x4ToQString(m_glWidget->getVRMatrix()));
         view.setAttribute("camOrigin", QVector4DToQString(m_glWidget->getCamOrigin()));
         settings.appendChild(view);
 

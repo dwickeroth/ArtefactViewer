@@ -98,6 +98,7 @@ private slots:
     void on_actionOpen_triggered();
     void on_actionSave_triggered();
     void on_actionClose_triggered();
+    void on_actionFullscreen_triggered();
     void on_actionScreenshot_triggered();
     void on_actionOffscreen_triggered();
     void on_actionBackground_triggered();
@@ -133,7 +134,7 @@ private:
     Ui::AVMainWindow*   ui;
 
     int m_currentLightIndex;
-
+    bool k_Ctrl;
     float getRotationAngleFromUI();
     void sortPointClouds();
     void sortVectorAngleList(QList<vectorAngle> &v);
